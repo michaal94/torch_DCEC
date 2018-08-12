@@ -91,19 +91,22 @@ else:
 dataset = 'MNIST'
 
 # Batch size
-batch = 600
+batch = 300
 params['batch'] = batch
 # Number of workers (typically 4*num_of_GPUs)
 workers = 4
 # Learning rate
 rate = 0.01
+rate_pretrain = 0.001
 # Adam params
 # Weight decay
 weight = 0
 # Scheduler steps for rate update
 sched_step = 20
+sched_step_pretrain = 20
 # Scheduler gamma - multiplier for learning rate
 sched_gamma = 0.1
+sched_gamma_pretrain = 0.1
 
 # Number of epochs
 epochs = 10
@@ -113,6 +116,14 @@ params['pretrain_epochs'] = pretrain_epochs
 # Printing frequency
 print_freq = 10
 params['print_freq'] = print_freq
+
+# Clustering loss weight:
+gamma = 0.1
+params['gamma'] = gamma
+
+# Update interval for target distribution:
+update_interval = 1
+params['update_interval'] = update_interval
 
 # Report for settings
 tmp = "Training the '" + model_name + "' architecture"
@@ -134,6 +145,10 @@ utils.print_both(f, tmp)
 tmp = "Number of epochs of training:\t" + str(epochs)
 utils.print_both(f, tmp)
 tmp = "Number of epochs of pretraining:\t" + str(pretrain_epochs)
+utils.print_both(f, tmp)
+tmp = "Clustering loss weight:\t" + str(gamma)
+utils.print_both(f, tmp)
+tmp = "Update interval for target distribution:\t" + str(update_interval)
 utils.print_both(f, tmp)
 
 # Data preparation
@@ -208,12 +223,22 @@ model = DCEC.DCEC(img_size)
     # writer.add_graph(model, torch.autograd.Variable(torch.Tensor(batch, img_size[2], img_size[0], img_size[1])))
 
 model = model.to(device)
-criterion = nn.MSELoss()
+criterion_1 = nn.MSELoss()
+criterion_2 = nn.KLDivLoss()
+
+criteria = [criterion_1, criterion_2]
+
 optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=rate)
+optimizer_pretrain = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=rate_pretrain)
 
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=sched_step, gamma=sched_gamma)
+optimizers = [optimizer, optimizer_pretrain]
 
-model = training_functions.train_model(model, dataloader, criterion, optimizer, exp_lr_scheduler, 200, params)
+scheduler = lr_scheduler.StepLR(optimizer, step_size=sched_step, gamma=sched_gamma)
+scheduler_pretrain = lr_scheduler.StepLR(optimizer_pretrain, step_size=sched_step_pretrain, gamma=sched_gamma_pretrain)
+
+schedulers = [scheduler, scheduler_pretrain]
+
+model = training_functions.train_model(model, dataloader, criteria, optimizers, schedulers, 200, params)
 
 torch.save(model.state_dict(), name_net + '.pt')
 

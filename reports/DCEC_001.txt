@@ -928,3 +928,464 @@ Epoch: [1][30/100]	Loss 0.4313 (0.6368)
 Epoch: [1][40/100]	Loss 0.3718 (0.5768)	
 Epoch: [1][50/100]	Loss 0.3364 (0.5320)	
 Epoch: [1][60/100]	Loss 0.3235 (0.4983)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.6907 (0.7824)	
+Epoch: [1][20/100]	Loss 0.5509 (0.6950)	
+Epoch: [1][30/100]	Loss 0.4296 (0.6183)	
+Epoch: [1][40/100]	Loss 0.3654 (0.5610)	
+Epoch: [1][50/100]	Loss 0.3460 (0.5189)	
+Epoch: [1][60/100]	Loss 0.3180 (0.4870)	
+Epoch: [1][70/100]	Loss 0.3076 (0.4621)	
+Epoch: [1][80/100]	Loss 0.2930 (0.4419)	
+Epoch: [1][90/100]	Loss 0.2889 (0.4255)	
+Epoch: [1][100/100]	Loss 0.2914 (0.4117)	
+Loss: 0.4117
+
+Epoch 2/200
+----------
+Epoch: [2][10/100]	Loss 0.2828 (0.2851)	
+Epoch: [2][20/100]	Loss 0.2714 (0.2821)	
+Epoch: [2][30/100]	Loss 0.2700 (0.2810)	
+Epoch: [2][40/100]	Loss 0.2707 (0.2793)	
+Epoch: [2][50/100]	Loss 0.2715 (0.2776)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7007 (0.7896)	
+Epoch: [1][20/100]	Loss 0.5405 (0.7028)	
+Epoch: [1][30/100]	Loss 0.4206 (0.6241)	
+Epoch: [1][40/100]	Loss 0.3688 (0.5655)	
+Epoch: [1][50/100]	Loss 0.3408 (0.5222)	
+Epoch: [1][60/100]	Loss 0.3206 (0.4894)	
+Epoch: [1][70/100]	Loss 0.3099 (0.4641)	
+Epoch: [1][80/100]	Loss 0.2926 (0.4435)	
+Epoch: [1][90/100]	Loss 0.2859 (0.4266)	
+Epoch: [1][100/100]	Loss 0.2835 (0.4126)	
+Loss: 0.4126
+
+Epoch 2/200
+----------
+Epoch: [2][10/100]	Loss 0.2784 (0.2811)	
+Epoch: [2][20/100]	Loss 0.2764 (0.2805)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+Clustering loss weight:	0.1
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.6939 (0.7921)	
+Epoch: [1][20/100]	Loss 0.5528 (0.7099)	
+Epoch: [1][30/100]	Loss 0.4360 (0.6344)	
+Epoch: [1][40/100]	Loss 0.3680 (0.5747)	
+Epoch: [1][50/100]	Loss 0.3431 (0.5308)	
+Epoch: [1][60/100]	Loss 0.3223 (0.4972)	
+Epoch: [1][70/100]	Loss 0.3199 (0.4712)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+Clustering loss weight:	0.1
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.6414 (0.7464)	
+Epoch: [1][20/100]	Loss 0.4764 (0.6495)	
+Epoch: [1][30/100]	Loss 0.3946 (0.5752)	
+Epoch: [1][40/100]	Loss 0.3537 (0.5223)	
+Epoch: [1][50/100]	Loss 0.3236 (0.4842)	
+Epoch: [1][60/100]	Loss 0.3170 (0.4564)	
+Epoch: [1][70/100]	Loss 0.2979 (0.4345)	
+Epoch: [1][80/100]	Loss 0.2944 (0.4168)	
+Epoch: [1][90/100]	Loss 0.2887 (0.4023)	
+Epoch: [1][100/100]	Loss 0.2858 (0.3905)	
+Loss: 0.3905
+
+Epoch 2/200
+----------
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+Clustering loss weight:	0.1
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7197 (0.8040)	
+Epoch: [1][20/100]	Loss 0.5763 (0.7212)	
+Epoch: [1][30/100]	Loss 0.4515 (0.6481)	
+Epoch: [1][40/100]	Loss 0.3830 (0.5884)	
+Epoch: [1][50/100]	Loss 0.3458 (0.5434)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+Clustering loss weight:	0.1
+Update interval for target distribution:	3
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+
+
+Updating target distribution:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+Clustering loss weight:	0.1
+Update interval for target distribution:	3
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+
+
+Updating target distribution:
+
+Updating target distribution:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+Clustering loss weight:	0.1
+Update interval for target distribution:	3
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+
+Updating target distribution:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7122 (0.8339)	
+Epoch: [1][20/100]	Loss 0.6027 (0.7450)	
+Epoch: [1][30/100]	Loss 0.4848 (0.6751)	
+Epoch: [1][40/100]	Loss 0.3970 (0.6129)	
+Epoch: [1][50/100]	Loss 0.3608 (0.5650)	
+Epoch: [1][60/100]	Loss 0.3316 (0.5281)	
+Epoch: [1][70/100]	Loss 0.3246 (0.4988)	
+Epoch: [1][80/100]	Loss 0.2978 (0.4749)	
+Epoch: [1][90/100]	Loss 0.3050 (0.4554)	
+Epoch: [1][100/100]	Loss 0.2906 (0.4392)	
+Loss: 0.4392
+
+Epoch 2/200
+----------
+Epoch: [2][10/100]	Loss 0.2885 (0.2874)	
+Epoch: [2][20/100]	Loss 0.2802 (0.2859)	
+Epoch: [2][30/100]	Loss 0.2758 (0.2849)	
+Epoch: [2][40/100]	Loss 0.2778 (0.2831)	
+Epoch: [2][50/100]	Loss 0.2733 (0.2819)	
+Epoch: [2][60/100]	Loss 0.2735 (0.2811)	
+Epoch: [2][70/100]	Loss 0.2747 (0.2799)	
+Epoch: [2][80/100]	Loss 0.2736 (0.2787)	
+Epoch: [2][90/100]	Loss 0.2724 (0.2777)	
+Epoch: [2][100/100]	Loss 0.2700 (0.2770)	
+Loss: 0.2770
+
+Epoch 3/200
+----------
+Epoch: [3][10/100]	Loss 0.2658 (0.2678)	
+Epoch: [3][20/100]	Loss 0.2605 (0.2668)	
+Epoch: [3][30/100]	Loss 0.2706 (0.2664)	
+Epoch: [3][40/100]	Loss 0.2624 (0.2659)	
+Epoch: [3][50/100]	Loss 0.2683 (0.2651)	
+Epoch: [3][60/100]	Loss 0.2687 (0.2650)	
+Epoch: [3][70/100]	Loss 0.2584 (0.2647)	
+Epoch: [3][80/100]	Loss 0.2665 (0.2643)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+Clustering loss weight:	0.1
+Update interval for target distribution:	1
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+
+Updating target distribution:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7149 (0.7926)	
+Epoch: [1][20/100]	Loss 0.5328 (0.7025)	
+Epoch: [1][30/100]	Loss 0.4136 (0.6239)	
+Epoch: [1][40/100]	Loss 0.3752 (0.5660)	
+Epoch: [1][50/100]	Loss 0.3274 (0.5228)	
+Epoch: [1][60/100]	Loss 0.3184 (0.4904)	
+Epoch: [1][70/100]	Loss 0.3024 (0.4647)	
+Epoch: [1][80/100]	Loss 0.2945 (0.4446)	
+Epoch: [1][90/100]	Loss 0.2887 (0.4278)	
+Epoch: [1][100/100]	Loss 0.2883 (0.4137)	
+Loss: 0.4137
+
+
+Updating target distribution:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+Clustering loss weight:	0.1
+Update interval for target distribution:	1
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+
+Updating target distribution:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7063 (0.7862)	
+Epoch: [1][20/100]	Loss 0.5287 (0.6962)	
+Epoch: [1][30/100]	Loss 0.4137 (0.6166)	
+Epoch: [1][40/100]	Loss 0.3677 (0.5592)	
+Epoch: [1][50/100]	Loss 0.3363 (0.5173)	
+Epoch: [1][60/100]	Loss 0.3184 (0.4856)	
+Epoch: [1][70/100]	Loss 0.3075 (0.4608)	
+Epoch: [1][80/100]	Loss 0.2996 (0.4408)	
+Epoch: [1][90/100]	Loss 0.2879 (0.4245)	
+Epoch: [1][100/100]	Loss 0.2908 (0.4108)	
+Loss: 0.4108
+
+
+Updating target distribution:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	300
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+Clustering loss weight:	0.1
+Update interval for target distribution:	1
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+Pretrained weights loaded from file: nets/DCEC_001_pretrained.pt
+
+Initializing cluster centers based on K-means
+
+Begin clusters training:
+
+Updating target distribution:
+Epoch 1/200
+----------
+Epoch: [1][10/200]	Loss 0.6940 (0.7832)	
+Epoch: [1][20/200]	Loss 0.5254 (0.6896)	
+Epoch: [1][30/200]	Loss 0.4239 (0.6112)	
+Epoch: [1][40/200]	Loss 0.3781 (0.5558)	
+Epoch: [1][50/200]	Loss 0.3250 (0.5139)	
+Epoch: [1][60/200]	Loss 0.3212 (0.4822)	
+Epoch: [1][70/200]	Loss 0.3117 (0.4578)	
+Epoch: [1][80/200]	Loss 0.2964 (0.4380)	
+Epoch: [1][90/200]	Loss 0.2892 (0.4223)	
+Epoch: [1][100/200]	Loss 0.2911 (0.4094)	
+Epoch: [1][110/200]	Loss 0.2853 (0.3982)	
+Epoch: [1][120/200]	Loss 0.2836 (0.3887)	
+Epoch: [1][130/200]	Loss 0.2831 (0.3803)	
+Epoch: [1][140/200]	Loss 0.2782 (0.3732)	
+Epoch: [1][150/200]	Loss 0.2669 (0.3668)	
+Epoch: [1][160/200]	Loss 0.2736 (0.3609)	
+Epoch: [1][170/200]	Loss 0.2757 (0.3558)	
+Epoch: [1][180/200]	Loss 0.2633 (0.3512)	
+Epoch: [1][190/200]	Loss 0.2657 (0.3470)	
+Epoch: [1][200/200]	Loss 0.2764 (0.3432)	
+Loss: 0.3432
+
+
+Updating target distribution:

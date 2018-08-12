@@ -5,8 +5,9 @@ import numpy as np
 import copy
 from sklearn.cluster import KMeans
 
+
 # Training function
-def train_model(model, dataloader, criterion, optimizer, scheduler, num_epochs, params):
+def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs, params):
 
     # Note the time
     since = time.time()
@@ -22,10 +23,12 @@ def train_model(model, dataloader, criterion, optimizer, scheduler, num_epochs, 
     device = params['device']
     batch = params['batch']
     pretrain_epochs = params['pretrain_epochs']
+    gamma = params['gamma']
+    update_interval = params['update_interval']
 
     if pretrain:
         while True:
-            pretrained_model = pretraining(model, dataloader, criterion, optimizer, scheduler, pretrain_epochs, params)
+            pretrained_model = pretraining(model, dataloader, criteria[0], optimizers[1], schedulers[1], pretrain_epochs, params)
             if pretrained_model:
                 break
             else:
@@ -34,7 +37,11 @@ def train_model(model, dataloader, criterion, optimizer, scheduler, num_epochs, 
                         layer.reset_parameters()
         model = pretrained_model
     else:
-        model.load_state_dict(torch.load(pretrained))
+        try:
+            model.load_state_dict(torch.load(pretrained))
+            utils.print_both(txt_file, 'Pretrained weights loaded from file: ' + str(pretrained))
+        except:
+            print("Couldn't load pretrained weights")
 
     utils.print_both(txt_file, '\nInitializing cluster centers based on K-means')
     kmeans(model, dataloader, params)
@@ -45,12 +52,25 @@ def train_model(model, dataloader, criterion, optimizer, scheduler, num_epochs, 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_loss = 10000.0
 
+    utils.print_both(txt_file, '\nUpdating target distribution:')
+    output_distribution, _, _ = calculate_predictions(model, dataloader, params)
+    target_distribution = target(output_distribution)
+
+    # print(output_distribution.size())
+    # print(target_distribution.size())
+
     # Go through all epochs
     for epoch in range(num_epochs):
+
+        if epoch % update_interval == 0 and epoch != 0:
+            utils.print_both(txt_file, '\nUpdating target distribution:')
+            output_distribution, _, _ = calculate_predictions(model, dataloader, params)
+            target_distribution = target(output_distribution)
+
         utils.print_both(txt_file, 'Epoch {}/{}'.format(epoch + 1, num_epochs))
         utils.print_both(txt_file, '-' * 10)
 
-        scheduler.step()
+        schedulers[0].step()
         model.train(True)  # Set model to training mode
 
         running_loss = 0.0
@@ -59,6 +79,7 @@ def train_model(model, dataloader, criterion, optimizer, scheduler, num_epochs, 
         batch_num = 1
         img_counter = 0
 
+
         # Iterate over data.
         for data in dataloader:
             # Get the inputs and labels
@@ -66,14 +87,18 @@ def train_model(model, dataloader, criterion, optimizer, scheduler, num_epochs, 
 
             inputs = inputs.to(device)
 
+            tar_dist = target_distribution[((batch_num - 1) * batch):(batch_num*batch)][:]
+            # print(tar_dist.size())
+
             # zero the parameter gradients
-            optimizer.zero_grad()
+            optimizers[0].zero_grad()
 
             with torch.set_grad_enabled(True):
-                outputs, _, _ = model(inputs)
-                loss = criterion(outputs, inputs)
+                outputs, clusters, _ = model(inputs)
+                loss = criteria[0](outputs, inputs)
+
                 loss.backward()
-                optimizer.step()
+                optimizers[0].step()
 
             # For keeping statistics
             running_loss += loss.item() * inputs.size(0)
@@ -244,3 +269,30 @@ def kmeans(model, dataloader, params):
     km.fit_predict(output_array.cpu().detach().numpy())
     weights = torch.from_numpy(km.cluster_centers_)
     model.clustering.set_weight(weights.to(params['device']))
+
+
+def calculate_predictions(model, dataloader, params):
+    output_array = None
+    label_array = None
+    model.eval()
+    for data in dataloader:
+        inputs, labels = data
+        inputs = inputs.to(params['device'])
+        labels = labels.to(params['device'])
+        _, outputs, _ = model(inputs)
+        if output_array is not None:
+            output_array = torch.cat((output_array, outputs), 0)
+            label_array = torch.cat((label_array, labels), 0)
+        else:
+            output_array = outputs
+            label_array = labels
+
+    _, preds = torch.max(output_array.data, 1)
+
+    return output_array, label_array, preds
+
+
+def target(out_distr):
+    tar_dist = out_distr ** 2 / torch.sum(out_distr, dim=0)
+    tar_dist = torch.t(torch.t(tar_dist) / torch.sum(tar_dist, dim=1))
+    return tar_dist
