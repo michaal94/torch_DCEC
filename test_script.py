@@ -24,7 +24,7 @@ from tensorboardX import SummaryWriter
 board = True
 test = True
 
-pretrain = False
+pretrain = True
 idx = 1
 
 params = {'pretrain': pretrain}
@@ -91,30 +91,30 @@ else:
 dataset = 'MNIST'
 
 # Batch size
-batch = 300
+batch = 6000
 params['batch'] = batch
 # Number of workers (typically 4*num_of_GPUs)
 workers = 4
 # Learning rate
-rate = 0.01
+rate = 0.001
 rate_pretrain = 0.001
 # Adam params
 # Weight decay
 weight = 0
 # Scheduler steps for rate update
-sched_step = 20
-sched_step_pretrain = 20
+sched_step = 500
+sched_step_pretrain = 200
 # Scheduler gamma - multiplier for learning rate
 sched_gamma = 0.1
 sched_gamma_pretrain = 0.1
 
 # Number of epochs
-epochs = 10
-pretrain_epochs = 6
+epochs = 1000
+pretrain_epochs = 200
 params['pretrain_epochs'] = pretrain_epochs
 
 # Printing frequency
-print_freq = 10
+print_freq = 1
 params['print_freq'] = print_freq
 
 # Clustering loss weight:
@@ -124,6 +124,10 @@ params['gamma'] = gamma
 # Update interval for target distribution:
 update_interval = 1
 params['update_interval'] = update_interval
+
+# Tolerance for label changes:
+tol = 1e-3
+params['tol'] = tol
 
 # Report for settings
 tmp = "Training the '" + model_name + "' architecture"

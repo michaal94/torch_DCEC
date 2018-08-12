@@ -25,6 +25,7 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
     pretrain_epochs = params['pretrain_epochs']
     gamma = params['gamma']
     update_interval = params['update_interval']
+    tol = params['tol']
 
     if pretrain:
         while True:
@@ -46,14 +47,14 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
     utils.print_both(txt_file, '\nInitializing cluster centers based on K-means')
     kmeans(model, dataloader, params)
 
-    utils.print_both(txt_file, '\nBegin clusters training:')
+    utils.print_both(txt_file, '\nBegin clusters training')
 
     # Prep variables for weights and accuracy of the best model
     best_model_wts = copy.deepcopy(model.state_dict())
     best_loss = 10000.0
 
-    utils.print_both(txt_file, '\nUpdating target distribution:')
-    output_distribution, _, _ = calculate_predictions(model, dataloader, params)
+    utils.print_both(txt_file, '\nUpdating target distribution')
+    output_distribution, _, preds_prev = calculate_predictions(model, dataloader, params)
     target_distribution = target(output_distribution)
 
     # print(output_distribution.size())
@@ -64,16 +65,36 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
 
         if epoch % update_interval == 0 and epoch != 0:
             utils.print_both(txt_file, '\nUpdating target distribution:')
-            output_distribution, _, _ = calculate_predictions(model, dataloader, params)
+            output_distribution, labels, preds = calculate_predictions(model, dataloader, params)
             target_distribution = target(output_distribution)
+            nmi = utils.metrics.nmi(labels, preds)
+            ari = utils.metrics.ari(labels, preds)
+            acc = utils.metrics.acc(labels, preds)
+            utils.print_both(txt_file,
+                             'NMI: {0:.5f}\tARI: {1:.5f}\tAcc {2:.5f}\t'.format(nmi, ari, acc))
+            if board:
+                niter = epoch // update_interval
+                writer.add_scalar('/NMI', nmi, niter)
+                writer.add_scalar('/ARI', ari, niter)
+                writer.add_scalar('/Acc', acc, niter)
+
+            # check stop criterion
+            delta_label = np.sum(preds != preds_prev).astype(np.float32) / preds.shape[0]
+            preds_prev = np.copy(preds)
+            if delta_label < tol:
+                utils.print_both(txt_file, 'Label divergence ', delta_label, '< tol ', tol)
+                utils.print_both(txt_file, 'Reached tolerance threshold. Stopping training.')
+                break
 
         utils.print_both(txt_file, 'Epoch {}/{}'.format(epoch + 1, num_epochs))
-        utils.print_both(txt_file, '-' * 10)
+        utils.print_both(txt_file,  '-' * 10)
 
         schedulers[0].step()
         model.train(True)  # Set model to training mode
 
         running_loss = 0.0
+        running_loss_rec = 0.0
+        running_loss_clust = 0.0
 
         # Keep the batch number for inter-phase statistics
         batch_num = 1
@@ -87,34 +108,54 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
 
             inputs = inputs.to(device)
 
-            tar_dist = target_distribution[((batch_num - 1) * batch):(batch_num*batch)][:]
-            # print(tar_dist.size())
+            tar_dist = target_distribution[((batch_num - 1) * batch):(batch_num*batch), :]
+            tar_dist = torch.from_numpy(tar_dist).to(device)
+            # print(tar_dist)
 
             # zero the parameter gradients
             optimizers[0].zero_grad()
 
             with torch.set_grad_enabled(True):
                 outputs, clusters, _ = model(inputs)
-                loss = criteria[0](outputs, inputs)
-
+                loss_rec = criteria[0](outputs, inputs)
+                # print('a')
+                # print(clusters)
+                # # print(torch.log(clusters))
+                loss_clust = criteria[1](torch.log(clusters), tar_dist)
+                loss = loss_rec + gamma * loss_clust
                 loss.backward()
                 optimizers[0].step()
 
             # For keeping statistics
             running_loss += loss.item() * inputs.size(0)
+            running_loss_rec += loss_rec.item() * inputs.size(0)
+            running_loss_clust += loss_rec.item() * inputs.size(0)
 
             # Some current stats
             loss_batch = loss.item()
+            loss_batch_rec = loss_rec.item()
+            loss_batch_clust = loss_clust.item()
             loss_accum = running_loss / ((batch_num - 1) * batch + inputs.size(0))
+            loss_accum_rec = running_loss_rec / ((batch_num - 1) * batch + inputs.size(0))
+            loss_accum_clust = running_loss_clust / ((batch_num - 1) * batch + inputs.size(0))
+
 
             if batch_num % print_freq == 0:
                 utils.print_both(txt_file, 'Epoch: [{0}][{1}/{2}]\t'
-                           'Loss {3:.4f} ({4:.4f})\t'.format(epoch + 1, batch_num, len(dataloader),
-                                                             loss_batch,
-                                                             loss_accum))
+                                           'Loss {3:.4f} ({4:.4f})\t'
+                                           'Loss_recovery {5:.4f} ({6:.4f})\t'
+                                           'Loss clustering {7:.4f} ({8:.4f})\t'.format(epoch + 1, batch_num,
+                                                                                        len(dataloader),
+                                                                                        loss_batch,
+                                                                                        loss_accum, loss_batch_rec,
+                                                                                        loss_accum_rec,
+                                                                                        loss_batch_clust,
+                                                                                        loss_accum_clust))
                 if board:
                     niter = epoch * len(dataloader) + batch_num
                     writer.add_scalar('/Loss', loss_accum, niter)
+                    writer.add_scalar('/Loss_recovery', loss_accum_rec, niter)
+                    writer.add_scalar('/Loss_clustering', loss_accum_clust, niter)
             batch_num = batch_num + 1
 
             if batch_num == len(dataloader) and (epoch+1) % 5:
@@ -261,14 +302,16 @@ def kmeans(model, dataloader, params):
         inputs = inputs.to(params['device'])
         _, _, outputs = model(inputs)
         if output_array is not None:
-            output_array = torch.cat((output_array, outputs), 0)
+            output_array = np.concatenate((output_array, outputs.cpu().detach().numpy()), 0)
         else:
-            output_array = outputs
-        if output_array.size()[0] > 50000: break
+            output_array = outputs.cpu().detach().numpy()
+        # print(output_array.shape)
+        if output_array.shape[0] > 50000: break
 
-    km.fit_predict(output_array.cpu().detach().numpy())
+    km.fit_predict(output_array)
     weights = torch.from_numpy(km.cluster_centers_)
     model.clustering.set_weight(weights.to(params['device']))
+    # torch.cuda.empty_cache()
 
 
 def calculate_predictions(model, dataloader, params):
@@ -281,18 +324,18 @@ def calculate_predictions(model, dataloader, params):
         labels = labels.to(params['device'])
         _, outputs, _ = model(inputs)
         if output_array is not None:
-            output_array = torch.cat((output_array, outputs), 0)
-            label_array = torch.cat((label_array, labels), 0)
+            output_array = np.concatenate((output_array, outputs.cpu().detach().numpy()), 0)
+            label_array = np.concatenate((label_array, labels.cpu().detach().numpy()), 0)
         else:
-            output_array = outputs
-            label_array = labels
+            output_array = outputs.cpu().detach().numpy()
+            label_array = labels.cpu().detach().numpy()
 
-    _, preds = torch.max(output_array.data, 1)
+    preds = np.argmax(output_array.data, axis=1)
 
     return output_array, label_array, preds
 
 
 def target(out_distr):
-    tar_dist = out_distr ** 2 / torch.sum(out_distr, dim=0)
-    tar_dist = torch.t(torch.t(tar_dist) / torch.sum(tar_dist, dim=1))
+    tar_dist = out_distr ** 2 / np.sum(out_distr, axis=0)
+    tar_dist = np.transpose(np.transpose(tar_dist) / np.sum(tar_dist, axis=1))
     return tar_dist
