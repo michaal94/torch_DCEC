@@ -284,3 +284,647 @@ Epoch: [7][20/100]	Loss 0.2598 (0.2708)
 Epoch: [7][30/100]	Loss 0.2486 (0.2681)	
 Epoch: [7][40/100]	Loss 0.2440 (0.2630)	
 Epoch: [7][50/100]	Loss 0.2386 (0.2585)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7086 (0.8029)	
+Epoch: [1][20/100]	Loss 0.5576 (0.7143)	
+Epoch: [1][30/100]	Loss 0.4224 (0.6365)	
+Epoch: [1][40/100]	Loss 0.3716 (0.5762)	
+Epoch: [1][50/100]	Loss 0.3399 (0.5315)	
+Epoch: [1][60/100]	Loss 0.3200 (0.4980)	
+Epoch: [1][70/100]	Loss 0.3105 (0.4716)	
+Epoch: [1][80/100]	Loss 0.2937 (0.4503)	
+Epoch: [1][90/100]	Loss 0.2916 (0.4331)	
+Epoch: [1][100/100]	Loss 0.2922 (0.4185)	
+Loss: 0.4185
+
+Epoch 2/200
+----------
+Epoch: [2][10/100]	Loss 0.2744 (0.2820)	
+Epoch: [2][20/100]	Loss 0.2816 (0.2821)	
+Epoch: [2][30/100]	Loss 0.2703 (0.2811)	
+Epoch: [2][40/100]	Loss 0.2769 (0.2800)	
+Epoch: [2][50/100]	Loss 0.2778 (0.2788)	
+Epoch: [2][60/100]	Loss 0.2722 (0.2776)	
+Epoch: [2][70/100]	Loss 0.2733 (0.2769)	
+Epoch: [2][80/100]	Loss 0.2711 (0.2760)	
+Epoch: [2][90/100]	Loss 0.2715 (0.2752)	
+Epoch: [2][100/100]	Loss 0.2730 (0.2744)	
+Loss: 0.2744
+
+Epoch 3/200
+----------
+Epoch: [3][10/100]	Loss 0.2617 (0.2633)	
+Epoch: [3][20/100]	Loss 0.2617 (0.2638)	
+Epoch: [3][30/100]	Loss 0.2584 (0.2622)	
+Epoch: [3][40/100]	Loss 0.2587 (0.2613)	
+Epoch: [3][50/100]	Loss 0.2732 (0.2617)	
+Epoch: [3][60/100]	Loss 0.2617 (0.2620)	
+Epoch: [3][70/100]	Loss 0.2549 (0.2617)	
+Epoch: [3][80/100]	Loss 0.2565 (0.2614)	
+Epoch: [3][90/100]	Loss 0.2508 (0.2612)	
+Epoch: [3][100/100]	Loss 0.2596 (0.2609)	
+Loss: 0.2609
+
+Epoch 4/200
+----------
+Epoch: [4][10/100]	Loss 0.2625 (0.2569)	
+Epoch: [4][20/100]	Loss 0.2558 (0.2557)	
+Epoch: [4][30/100]	Loss 0.2535 (0.2559)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7193 (0.8155)	
+Epoch: [1][20/100]	Loss 0.5828 (0.7286)	
+Epoch: [1][30/100]	Loss 0.4545 (0.6531)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.6897 (0.7752)	
+Epoch: [1][20/100]	Loss 0.5133 (0.6815)	
+Epoch: [1][30/100]	Loss 0.4117 (0.6028)	
+Epoch: [1][40/100]	Loss 0.3619 (0.5479)	
+Epoch: [1][50/100]	Loss 0.3436 (0.5075)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7331 (0.8091)	
+Epoch: [1][20/100]	Loss 0.5770 (0.7251)	
+Epoch: [1][30/100]	Loss 0.4460 (0.6524)	
+Epoch: [1][40/100]	Loss 0.3890 (0.5926)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7004 (0.7849)	
+Epoch: [1][20/100]	Loss 0.5462 (0.6953)	
+Epoch: [1][30/100]	Loss 0.4234 (0.6179)	
+Epoch: [1][40/100]	Loss 0.3668 (0.5605)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.6940 (0.7820)	
+Epoch: [1][20/100]	Loss 0.5217 (0.6946)	
+Epoch: [1][30/100]	Loss 0.4048 (0.6150)	
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Epoch 1/200
+----------
+Training the 'DCEC' architecture
+
+The following parameters are used:
+Batch size:	600
+Number of workers:	4
+Learning rate:	0.01
+Weight decay:	0
+Scheduler steps:	20
+Scheduler gamma:	0.1
+Number of epochs of training:	10
+Number of epochs of pretraining:	6
+
+Data preparation
+Reading data from: MNIST dataset
+Image size used:	28x28
+Training set size:	60000
+
+Performing calculations on:	cuda:0
+
+
+Initialize cluster centers:
+
+Begin clusters training:
+Epoch 1/200
+----------
+Epoch: [1][10/100]	Loss 0.7103 (0.7985)	
+Epoch: [1][20/100]	Loss 0.5667 (0.7127)	
+Epoch: [1][30/100]	Loss 0.4313 (0.6368)	
+Epoch: [1][40/100]	Loss 0.3718 (0.5768)	
+Epoch: [1][50/100]	Loss 0.3364 (0.5320)	
+Epoch: [1][60/100]	Loss 0.3235 (0.4983)	

@@ -2,28 +2,47 @@ import utils
 import time
 import torch
 import numpy as np
+import copy
+from sklearn.cluster import KMeans
 
 # Training function
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25, pretrain=True, txt_file):
+def train_model(model, dataloader, criterion, optimizer, scheduler, num_epochs, params):
+
     # Note the time
     since = time.time()
 
+    # Unpack parameters
+    writer = params['writer']
+    if writer is not None: board = True
+    txt_file = params['txt_file']
+    pretrained = params['model_files'][1]
+    pretrain = params['pretrain']
+    print_freq = params['print_freq']
+    dataset_size = params['dataset_size']
+    device = params['device']
+    batch = params['batch']
+    pretrain_epochs = params['pretrain_epochs']
+
     if pretrain:
         while True:
-            pretrained_model = pretraining(model, criterion, optimizer, scheduler, num_epochs=6)
-            if pretrained_model: break
+            pretrained_model = pretraining(model, dataloader, criterion, optimizer, scheduler, pretrain_epochs, params)
+            if pretrained_model:
+                break
+            else:
+                for layer in model.children():
+                    if hasattr(layer, 'reset_parameters'):
+                        layer.reset_parameters()
         model = pretrained_model
     else:
         model.load_state_dict(torch.load(pretrained))
 
-    utils.print_both(txt_file, '\nInitialize cluster centers:')
-    model = kmeans(model)
+    utils.print_both(txt_file, '\nInitializing cluster centers based on K-means')
+    kmeans(model, dataloader, params)
 
     utils.print_both(txt_file, '\nBegin clusters training:')
 
     # Prep variables for weights and accuracy of the best model
     best_model_wts = copy.deepcopy(model.state_dict())
-    # best_acc = 0.0
     best_loss = 10000.0
 
     # Go through all epochs
@@ -35,11 +54,9 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25, pretrain=
         model.train(True)  # Set model to training mode
 
         running_loss = 0.0
-        # running_corrects = 0
 
         # Keep the batch number for inter-phase statistics
         batch_num = 1
-
         img_counter = 0
 
         # Iterate over data.
@@ -48,26 +65,22 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25, pretrain=
             inputs, _ = data
 
             inputs = inputs.to(device)
-            # labels = labels.to(device)
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
             with torch.set_grad_enabled(True):
-                outputs, _ = model(inputs)
+                outputs, _, _ = model(inputs)
                 loss = criterion(outputs, inputs)
                 loss.backward()
                 optimizer.step()
 
             # For keeping statistics
             running_loss += loss.item() * inputs.size(0)
-            # running_corrects += torch.sum(preds == labels.data)
 
             # Some current stats
             loss_batch = loss.item()
             loss_accum = running_loss / ((batch_num - 1) * batch + inputs.size(0))
-            # acc_batch = torch.sum(preds == labels.data).double() / inputs.size(0)
-            # acc_accum = running_corrects.double() / ((batch_num - 1) * batch + inputs.size(0))
 
             if batch_num % print_freq == 0:
                 utils.print_both(txt_file, 'Epoch: [{0}][{1}/{2}]\t'
@@ -104,16 +117,25 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25, pretrain=
     time_elapsed = time.time() - since
     utils.print_both(txt_file, 'Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
-    # print_both('Best val accuracy: {:4f}'.format(best_acc))
 
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
 
 
-def pretraining(model, criterion, optimizer, scheduler, num_epochs=200, pretrain=True, txt_file):
+def pretraining(model, dataloader, criterion, optimizer, scheduler, num_epochs, params):
     # Note the time
     since = time.time()
+
+    # Unpack parameters
+    writer = params['writer']
+    if writer is not None: board = True
+    txt_file = params['txt_file']
+    pretrained = params['model_files'][1]
+    print_freq = params['print_freq']
+    dataset_size = params['dataset_size']
+    device = params['device']
+    batch = params['batch']
 
     # Prep variables for weights and accuracy of the best model
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -145,7 +167,7 @@ def pretraining(model, criterion, optimizer, scheduler, num_epochs=200, pretrain
             optimizer.zero_grad()
 
             with torch.set_grad_enabled(True):
-                outputs, _ = model(inputs)
+                outputs, _, _ = model(inputs)
                 loss = criterion(outputs, inputs)
                 loss.backward()
                 optimizer.step()
@@ -178,7 +200,7 @@ def pretraining(model, criterion, optimizer, scheduler, num_epochs=200, pretrain
         epoch_loss = running_loss / dataset_size
         if epoch == 0: first_loss = epoch_loss
         if epoch == 4 and epoch_loss / first_loss > 0.8:
-            utils.print_both(txt_file, "Loss not converging, starting pretraining again")
+            utils.print_both(txt_file, "\nLoss not converging, starting pretraining again\n")
             return False
 
         if board:
@@ -203,3 +225,22 @@ def pretraining(model, criterion, optimizer, scheduler, num_epochs=200, pretrain
     torch.save(model.state_dict(), pretrained)
 
     return model
+
+
+def kmeans(model, dataloader, params):
+    km = KMeans(n_clusters=model.num_clusters, n_init=20)
+    output_array = None
+    model.eval()
+    for data in dataloader:
+        inputs, _ = data
+        inputs = inputs.to(params['device'])
+        _, _, outputs = model(inputs)
+        if output_array is not None:
+            output_array = torch.cat((output_array, outputs), 0)
+        else:
+            output_array = outputs
+        if output_array.size()[0] > 50000: break
+
+    km.fit_predict(output_array.cpu().detach().numpy())
+    weights = torch.from_numpy(km.cluster_centers_)
+    model.clustering.set_weight(weights.to(params['device']))

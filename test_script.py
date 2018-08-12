@@ -16,6 +16,8 @@ import math
 import fnmatch
 import re
 import DCEC
+import utils
+import training_functions
 
 from tensorboardX import SummaryWriter
 
@@ -24,6 +26,8 @@ test = True
 
 pretrain = False
 idx = 1
+
+params = {'pretrain': pretrain}
 
 # Directories
 dirs = ['runs', 'reports', 'nets']
@@ -50,7 +54,7 @@ name = model_name + '_' + str(idx).zfill(3)
 
 # Filenames for report and weights
 name_txt = name + '.txt'
-name_net = name + '.pt'
+name_net = name
 pretrained = name + '_pretrained.pt'
 
 name_txt = os.path.join('reports', name_txt)
@@ -59,15 +63,15 @@ pretrained = os.path.join('nets', pretrained)
 if not pretrain and not os.path.isfile(pretrained):
     print("No pretrained weights, try again choosing pretrained network or create new with pretrain=True")
 
+model_files = [name_net, pretrained]
+params['model_files'] = model_files
 
 # Open file
 if pretrain:
     f = open(name_txt, 'w')
 else:
     f = open(name_txt, 'a')
-
-
-
+params['txt_file'] = f
 
 # Delete tensorboard entry if exist (not to overlap)
 try:
@@ -78,6 +82,9 @@ except:
 # Initialize tensorboard writer
 if board:
     writer = SummaryWriter('runs/' + name)
+    params['writer'] = writer
+else:
+    params['writer'] = None
 
 # Hyperparameters
 
@@ -85,6 +92,7 @@ dataset = 'MNIST'
 
 # Batch size
 batch = 600
+params['batch'] = batch
 # Number of workers (typically 4*num_of_GPUs)
 workers = 4
 # Learning rate
@@ -99,38 +107,43 @@ sched_gamma = 0.1
 
 # Number of epochs
 epochs = 10
+pretrain_epochs = 6
+params['pretrain_epochs'] = pretrain_epochs
 
 # Printing frequency
 print_freq = 10
+params['print_freq'] = print_freq
 
 # Report for settings
 tmp = "Training the '" + model_name + "' architecture"
-print_both(tmp)
+utils.print_both(f, tmp)
 tmp = "\n" + "The following parameters are used:"
-print_both(tmp)
+utils.print_both(f, tmp)
 tmp = "Batch size:\t" + str(batch)
-print_both(tmp)
+utils.print_both(f, tmp)
 tmp = "Number of workers:\t" + str(workers)
-print_both(tmp)
+utils.print_both(f, tmp)
 tmp = "Learning rate:\t" + str(rate)
-print_both(tmp)
+utils.print_both(f, tmp)
 tmp = "Weight decay:\t" + str(weight)
-print_both(tmp)
+utils.print_both(f, tmp)
 tmp = "Scheduler steps:\t" + str(sched_step)
-print_both(tmp)
+utils.print_both(f, tmp)
 tmp = "Scheduler gamma:\t" + str(sched_gamma)
-print_both(tmp)
+utils.print_both(f, tmp)
 tmp = "Number of epochs of training:\t" + str(epochs)
-print_both(tmp)
+utils.print_both(f, tmp)
+tmp = "Number of epochs of pretraining:\t" + str(pretrain_epochs)
+utils.print_both(f, tmp)
 
 # Data preparation
 
 if dataset == 'MNIST':
     tmp = "\nData preparation\nReading data from: MNIST dataset"
-    print_both(tmp)
+    utils.print_both(f, tmp)
     img_size = [28, 28, 1]
     tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
-    print_both(tmp)
+    utils.print_both(f, tmp)
 
     dataloader = torch.utils.data.DataLoader(
         datasets.MNIST('../data', train=True, download=True,
@@ -142,13 +155,13 @@ if dataset == 'MNIST':
 
     dataset_size = 60000
     tmp = "Training set size:\t" + str(dataset_size)
-    print_both(tmp)
+    utils.print_both(f, tmp)
 
 else:
     # Data folder
     data_dir = 'data'
     tmp = "\nData preparation\nReading data from:\t./" + data_dir
-    print_both(tmp)
+    utils.print_both(f, tmp)
 
     # Image size
     custom_size = math.nan
@@ -157,7 +170,7 @@ else:
         img_size = custom_size
 
     tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
-    print_both(tmp)
+    utils.print_both(f, tmp)
 
     # Transformations
     data_transforms = transforms.Compose([
@@ -176,20 +189,19 @@ else:
     # Size of data sets
     dataset_size = len(image_dataset)
     tmp = "Training set size:\t" + str(dataset_size)
-    print_both(tmp)
+    utils.print_both(f, tmp)
 
 
-# Class names
-# class_names = image_datasets['train'].classes
+params['dataset_size'] = dataset_size
+
 
 # GPU check
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 tmp = "\nPerforming calculations on:\t" + str(device)
-print_both(tmp + '\n')
+utils.print_both(f, tmp + '\n')
+params['device'] = device
 
-
-
-
+# print(params)
 
 model = DCEC.DCEC(img_size)
 # if board:
@@ -198,15 +210,12 @@ model = DCEC.DCEC(img_size)
 model = model.to(device)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=rate)
-# optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=0.01, momentum=0.9,
-#                          weight_decay=0)
 
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=sched_step, gamma=sched_gamma)
 
+model = training_functions.train_model(model, dataloader, criterion, optimizer, exp_lr_scheduler, 200, params)
 
-model = train_model(model, criterion, optimizer, exp_lr_scheduler, num_epochs=200, pretrain=pretrain)
-
-torch.save(model.state_dict(), name_net)
+torch.save(model.state_dict(), name_net + '.pt')
 
 # if test:
 #     acc, preds_list = test_model(model_ft, criterion)

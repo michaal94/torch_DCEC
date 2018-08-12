@@ -41,6 +41,7 @@ class DCEC(nn.Module):
         # print(x.size())
         x = self.embedding(x)
         # print(x.size())
+        extra_out = x
         clustering_out = self.clustering(x)
         # print(clustering_out.size())
         x = self.deembedding(x)
@@ -55,7 +56,7 @@ class DCEC(nn.Module):
         # print(x.size())
         x = self.deconv1(x)
         # print(x.size())
-        return x, clustering_out
+        return x, clustering_out, extra_out
 
 
 class ClusterlingLayer(nn.Module):
@@ -86,3 +87,6 @@ class ClusterlingLayer(nn.Module):
         return 'in_features={}, out_features={}, alpha={}'.format(
             self.in_features, self.out_features, self.alpha
         )
+
+    def set_weight(self, tensor):
+        self.weight = nn.Parameter(tensor)
