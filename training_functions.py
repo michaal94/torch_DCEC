@@ -27,9 +27,11 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
     update_interval = params['update_interval']
     tol = params['tol']
 
+    dl = dataloader
+
     if pretrain:
         while True:
-            pretrained_model = pretraining(model, dataloader, criteria[0], optimizers[1], schedulers[1], pretrain_epochs, params)
+            pretrained_model = pretraining(model, copy.deepcopy(dl), criteria[0], optimizers[1], schedulers[1], pretrain_epochs, params)
             if pretrained_model:
                 break
             else:
@@ -45,7 +47,7 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
             print("Couldn't load pretrained weights")
 
     utils.print_both(txt_file, '\nInitializing cluster centers based on K-means')
-    kmeans(model, dataloader, params)
+    kmeans(model, copy.deepcopy(dl), params)
 
     utils.print_both(txt_file, '\nBegin clusters training')
 
@@ -54,8 +56,13 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
     best_loss = 10000.0
 
     utils.print_both(txt_file, '\nUpdating target distribution')
-    output_distribution, _, preds_prev = calculate_predictions(model, dataloader, params)
+    output_distribution, labels, preds_prev = calculate_predictions(model, copy.deepcopy(dl), params)
     target_distribution = target(output_distribution)
+    nmi = utils.metrics.nmi(labels, preds_prev)
+    ari = utils.metrics.ari(labels, preds_prev)
+    acc = utils.metrics.acc(labels, preds_prev)
+    utils.print_both(txt_file,
+                     'NMI: {0:.5f}\tARI: {1:.5f}\tAcc {2:.5f}\t'.format(nmi, ari, acc))
 
     # print(output_distribution.size())
     # print(target_distribution.size())
@@ -65,8 +72,10 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
 
         if epoch % update_interval == 0 and epoch != 0:
             utils.print_both(txt_file, '\nUpdating target distribution:')
-            output_distribution, labels, preds = calculate_predictions(model, dataloader, params)
+            output_distribution, labels, preds = calculate_predictions(model, copy.deepcopy(dl), params)
             target_distribution = target(output_distribution)
+            print(labels)
+            print(preds)
             nmi = utils.metrics.nmi(labels, preds)
             ari = utils.metrics.ari(labels, preds)
             acc = utils.metrics.acc(labels, preds)
@@ -107,6 +116,29 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
             inputs, _ = data
 
             inputs = inputs.to(device)
+            upd = False
+            if upd:
+                utils.print_both(txt_file, '\nUpdating target distribution:')
+                output_distribution, labels, preds = calculate_predictions(model, dataloader, params)
+                target_distribution = target(output_distribution)
+                nmi = utils.metrics.nmi(labels, preds)
+                ari = utils.metrics.ari(labels, preds)
+                acc = utils.metrics.acc(labels, preds)
+                utils.print_both(txt_file,
+                                 'NMI: {0:.5f}\tARI: {1:.5f}\tAcc {2:.5f}\t'.format(nmi, ari, acc))
+                # if board:
+                #     niter = epoch // update_interval
+                #     writer.add_scalar('/NMI', nmi, niter)
+                #     writer.add_scalar('/ARI', ari, niter)
+                #     writer.add_scalar('/Acc', acc, niter)
+
+                # check stop criterion
+                delta_label = np.sum(preds != preds_prev).astype(np.float32) / preds.shape[0]
+                preds_prev = np.copy(preds)
+                if delta_label < tol:
+                    utils.print_both(txt_file, 'Label divergence ' + delta_label + '< tol ' + tol)
+                    utils.print_both(txt_file, 'Reached tolerance threshold. Stopping training.')
+                    break
 
             tar_dist = target_distribution[((batch_num - 1) * batch):(batch_num*batch), :]
             tar_dist = torch.from_numpy(tar_dist).to(device)
@@ -121,8 +153,9 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
                 # print('a')
                 # print(clusters)
                 # # print(torch.log(clusters))
-                loss_clust = criteria[1](torch.log(clusters), tar_dist)
-                loss = loss_rec + gamma * loss_clust
+                loss_clust = gamma *criteria[1](torch.log(clusters), tar_dist) / batch
+                # loss_clust = criteria[1](clusters, tar_dist)
+                loss = loss_rec + loss_clust
                 loss.backward()
                 optimizers[0].step()
 

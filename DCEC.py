@@ -6,24 +6,26 @@ import math
 class DCEC(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128]):
         super(DCEC, self).__init__()
+        bias = True
         self.pretrained = False
         self.num_clusters = num_clusters
         self.input_shape = input_shape
         self.filters = filters
-        self.conv1 = nn.Conv2d(input_shape[2], filters[0], 5, stride=2, padding=2, bias=False)
+        self.conv1 = nn.Conv2d(input_shape[2], filters[0], 5, stride=2, padding=2, bias=bias)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(filters[0], filters[1], 5, stride=2, padding=2, bias=False)
-        self.conv3 = nn.Conv2d(filters[1], filters[2], 3, stride=2, padding=0, bias=False)
+        self.relu = nn.LeakyReLU(negative_slope=0.1)
+        self.conv2 = nn.Conv2d(filters[0], filters[1], 5, stride=2, padding=2, bias=bias)
+        self.conv3 = nn.Conv2d(filters[1], filters[2], 3, stride=2, padding=0, bias=bias)
         lin_features_len = ((input_shape[0]//2//2-1) // 2) * ((input_shape[0]//2//2-1) // 2) * filters[2]
         # print(lin_features_len)
-        self.embedding = nn.Linear(lin_features_len, num_clusters, bias=False)
-        self.deembedding = nn.Linear(num_clusters, lin_features_len, bias=False)
+        self.embedding = nn.Linear(lin_features_len, num_clusters, bias=bias)
+        self.deembedding = nn.Linear(num_clusters, lin_features_len, bias=bias)
         out_pad = 1 if input_shape[0] // 2 // 2 % 2 == 0 else 0
-        self.deconv3 = nn.ConvTranspose2d(filters[2], filters[1], 3, stride=2, padding=0, output_padding=out_pad, bias=False)
+        self.deconv3 = nn.ConvTranspose2d(filters[2], filters[1], 3, stride=2, padding=0, output_padding=out_pad, bias=bias)
         out_pad = 1 if input_shape[0] // 2 % 2 == 0 else 0
-        self.deconv2 = nn.ConvTranspose2d(filters[1], filters[0], 5, stride=2, padding=2, output_padding=out_pad, bias=False)
+        self.deconv2 = nn.ConvTranspose2d(filters[1], filters[0], 5, stride=2, padding=2, output_padding=out_pad, bias=bias)
         out_pad = 1 if input_shape[0] % 2 == 0 else 0
-        self.deconv1 = nn.ConvTranspose2d(filters[0], input_shape[2], 5, stride=2, padding=2, output_padding=out_pad, bias=False)
+        self.deconv1 = nn.ConvTranspose2d(filters[0], input_shape[2], 5, stride=2, padding=2, output_padding=out_pad, bias=bias)
         self.clustering = ClusterlingLayer(num_clusters, num_clusters)
 
     def forward(self, x):
@@ -74,7 +76,7 @@ class ClusterlingLayer(nn.Module):
         x = torch.sum(x, dim=2)
         x = 1.0 + (x / self.alpha)
         x = 1.0 / x
-        x = x ** (self.alpha +1.0) / 2.0
+        x = x ** ((self.alpha +1.0) / 2.0)
         x = torch.t(x) / torch.sum(x, dim=1)
         x = torch.t(x)
         # q = 1.0 / (1.0 + (K.sum(K.square(x), axis=2) / self.alpha))

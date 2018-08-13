@@ -25,13 +25,14 @@ board = True
 test = True
 
 pretrain = True
-idx = 1
+if not pretrain:
+    idx = 6
 
 params = {'pretrain': pretrain}
 
 # Directories
 dirs = ['runs', 'reports', 'nets']
-map(lambda x: os.makedirs(x, exist_ok=True), dirs)
+list(map(lambda x: os.makedirs(x, exist_ok=True), dirs))
 
 # Net architecture
 model_name = 'DCEC'
@@ -91,7 +92,7 @@ else:
 dataset = 'MNIST'
 
 # Batch size
-batch = 6000
+batch = 256
 params['batch'] = batch
 # Number of workers (typically 4*num_of_GPUs)
 workers = 4
@@ -110,7 +111,7 @@ sched_gamma_pretrain = 0.1
 
 # Number of epochs
 epochs = 1000
-pretrain_epochs = 200
+pretrain_epochs = 300
 params['pretrain_epochs'] = pretrain_epochs
 
 # Printing frequency
@@ -168,9 +169,9 @@ if dataset == 'MNIST':
         datasets.MNIST('../data', train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
+                           # transforms.Normalize((0.1307,), (0.3081,))
                        ])),
-        batch_size=batch, shuffle=True, num_workers=4)
+        batch_size=batch, shuffle=False, num_workers=4)
 
     dataset_size = 60000
     tmp = "Training set size:\t" + str(dataset_size)
@@ -227,13 +228,17 @@ model = DCEC.DCEC(img_size)
     # writer.add_graph(model, torch.autograd.Variable(torch.Tensor(batch, img_size[2], img_size[0], img_size[1])))
 
 model = model.to(device)
-criterion_1 = nn.MSELoss()
-criterion_2 = nn.KLDivLoss()
+criterion_1 = nn.MSELoss(size_average=True)
+criterion_2 = nn.KLDivLoss(size_average=False)
 
 criteria = [criterion_1, criterion_2]
 
 optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=rate)
+# optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=rate, momentum=0.9)
+
 optimizer_pretrain = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=rate_pretrain)
+# optimizer_pretrain = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=rate_pretrain, momentum=0.9)
+# optimizer_pretrain = optim.Adagrad(filter(lambda p: p.requires_grad, model.parameters()), lr=rate_pretrain)
 
 optimizers = [optimizer, optimizer_pretrain]
 
@@ -242,7 +247,7 @@ scheduler_pretrain = lr_scheduler.StepLR(optimizer_pretrain, step_size=sched_ste
 
 schedulers = [scheduler, scheduler_pretrain]
 
-model = training_functions.train_model(model, dataloader, criteria, optimizers, schedulers, 200, params)
+model = training_functions.train_model(model, dataloader, criteria, optimizers, schedulers, epochs, params)
 
 torch.save(model.state_dict(), name_net + '.pt')
 
