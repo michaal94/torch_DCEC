@@ -91,7 +91,7 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
             delta_label = np.sum(preds != preds_prev).astype(np.float32) / preds.shape[0]
             preds_prev = np.copy(preds)
             if delta_label < tol:
-                utils.print_both(txt_file, 'Label divergence ', delta_label, '< tol ', tol)
+                utils.print_both(txt_file, 'Label divergence ' + delta_label + '< tol ' + tol)
                 utils.print_both(txt_file, 'Reached tolerance threshold. Stopping training.')
                 break
 
@@ -116,8 +116,7 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
             inputs, _ = data
 
             inputs = inputs.to(device)
-            upd = False
-            if upd:
+            if (batch_num - 1) % update_interval:
                 utils.print_both(txt_file, '\nUpdating target distribution:')
                 output_distribution, labels, preds = calculate_predictions(model, dataloader, params)
                 target_distribution = target(output_distribution)
@@ -172,7 +171,6 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
             loss_accum_rec = running_loss_rec / ((batch_num - 1) * batch + inputs.size(0))
             loss_accum_clust = running_loss_clust / ((batch_num - 1) * batch + inputs.size(0))
 
-
             if batch_num % print_freq == 0:
                 utils.print_both(txt_file, 'Epoch: [{0}][{1}/{2}]\t'
                                            'Loss {3:.4f} ({4:.4f})\t'
@@ -200,11 +198,17 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
                     img_counter += 1
 
         epoch_loss = running_loss / dataset_size
+        epoch_loss_rec = running_loss_rec / dataset_size
+        epoch_loss_clust = running_loss_clust / dataset_size
 
         if board:
             writer.add_scalar('/Loss' + '/Epoch', epoch_loss, epoch + 1)
+            writer.add_scalar('/Loss_rec' + '/Epoch', epoch_loss_rec, epoch + 1)
+            writer.add_scalar('/Loss_clust' + '/Epoch', epoch_loss_clust, epoch + 1)
 
-        utils.print_both(txt_file, 'Loss: {:.4f}'.format(epoch_loss))
+        utils.print_both(txt_file, 'Loss: {0:.4f}\tLoss_recovery: {1:.4f}\tLoss_clustering: {2:.4f}'.format(epoch_loss,
+                                                                                                            epoch_loss_rec,
+                                                                                                            epoch_loss_clust))
 
         # deep copy the
         if epoch_loss < best_loss or epoch_loss > best_loss:
