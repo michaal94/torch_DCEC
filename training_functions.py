@@ -62,38 +62,18 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
     ari = utils.metrics.ari(labels, preds_prev)
     acc = utils.metrics.acc(labels, preds_prev)
     utils.print_both(txt_file,
-                     'NMI: {0:.5f}\tARI: {1:.5f}\tAcc {2:.5f}\t'.format(nmi, ari, acc))
+                     'NMI: {0:.5f}\tARI: {1:.5f}\tAcc {2:.5f}\n'.format(nmi, ari, acc))
 
-    # print(output_distribution.size())
-    # print(target_distribution.size())
+    if board:
+        niter = 0
+        writer.add_scalar('/NMI', nmi, niter)
+        writer.add_scalar('/ARI', ari, niter)
+        writer.add_scalar('/Acc', acc, niter)
+
+    finished = False
 
     # Go through all epochs
     for epoch in range(num_epochs):
-
-        if epoch % update_interval == 0 and epoch != 0:
-            utils.print_both(txt_file, '\nUpdating target distribution:')
-            output_distribution, labels, preds = calculate_predictions(model, copy.deepcopy(dl), params)
-            target_distribution = target(output_distribution)
-            print(labels)
-            print(preds)
-            nmi = utils.metrics.nmi(labels, preds)
-            ari = utils.metrics.ari(labels, preds)
-            acc = utils.metrics.acc(labels, preds)
-            utils.print_both(txt_file,
-                             'NMI: {0:.5f}\tARI: {1:.5f}\tAcc {2:.5f}\t'.format(nmi, ari, acc))
-            if board:
-                niter = epoch // update_interval
-                writer.add_scalar('/NMI', nmi, niter)
-                writer.add_scalar('/ARI', ari, niter)
-                writer.add_scalar('/Acc', acc, niter)
-
-            # check stop criterion
-            delta_label = np.sum(preds != preds_prev).astype(np.float32) / preds.shape[0]
-            preds_prev = np.copy(preds)
-            if delta_label < tol:
-                utils.print_both(txt_file, 'Label divergence ' + delta_label + '< tol ' + tol)
-                utils.print_both(txt_file, 'Reached tolerance threshold. Stopping training.')
-                break
 
         utils.print_both(txt_file, 'Epoch {}/{}'.format(epoch + 1, num_epochs))
         utils.print_both(txt_file,  '-' * 10)
@@ -108,7 +88,7 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
         # Keep the batch number for inter-phase statistics
         batch_num = 1
         img_counter = 0
-
+        update_iter = 1
 
         # Iterate over data.
         for data in dataloader:
@@ -116,7 +96,8 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
             inputs, _ = data
 
             inputs = inputs.to(device)
-            if (batch_num - 1) % update_interval:
+
+            if (batch_num - 1) % update_interval == 0 and not (batch_num == 1 and epoch == 0):
                 utils.print_both(txt_file, '\nUpdating target distribution:')
                 output_distribution, labels, preds = calculate_predictions(model, dataloader, params)
                 target_distribution = target(output_distribution)
@@ -125,18 +106,20 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
                 acc = utils.metrics.acc(labels, preds)
                 utils.print_both(txt_file,
                                  'NMI: {0:.5f}\tARI: {1:.5f}\tAcc {2:.5f}\t'.format(nmi, ari, acc))
-                # if board:
-                #     niter = epoch // update_interval
-                #     writer.add_scalar('/NMI', nmi, niter)
-                #     writer.add_scalar('/ARI', ari, niter)
-                #     writer.add_scalar('/Acc', acc, niter)
+                if board:
+                    niter = update_iter
+                    writer.add_scalar('/NMI', nmi, niter)
+                    writer.add_scalar('/ARI', ari, niter)
+                    writer.add_scalar('/Acc', acc, niter)
+                    update_iter += 1
 
                 # check stop criterion
                 delta_label = np.sum(preds != preds_prev).astype(np.float32) / preds.shape[0]
                 preds_prev = np.copy(preds)
                 if delta_label < tol:
-                    utils.print_both(txt_file, 'Label divergence ' + delta_label + '< tol ' + tol)
+                    utils.print_both(txt_file, 'Label divergence ' + str(delta_label) + '< tol ' + str(tol))
                     utils.print_both(txt_file, 'Reached tolerance threshold. Stopping training.')
+                    finished = True
                     break
 
             tar_dist = target_distribution[((batch_num - 1) * batch):(batch_num*batch), :]
@@ -149,11 +132,7 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
             with torch.set_grad_enabled(True):
                 outputs, clusters, _ = model(inputs)
                 loss_rec = criteria[0](outputs, inputs)
-                # print('a')
-                # print(clusters)
-                # # print(torch.log(clusters))
                 loss_clust = gamma *criteria[1](torch.log(clusters), tar_dist) / batch
-                # loss_clust = criteria[1](clusters, tar_dist)
                 loss = loss_rec + loss_clust
                 loss.backward()
                 optimizers[0].step()
@@ -196,6 +175,8 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
                     img = np.concatenate((inp, out), axis=1)
                     writer.add_image('Clustering/Epoch_' + str(epoch + 1).zfill(3) + '/Sample_' + str(img_counter).zfill(2), img)
                     img_counter += 1
+
+        if finished: break
 
         epoch_loss = running_loss / dataset_size
         epoch_loss_rec = running_loss_rec / dataset_size

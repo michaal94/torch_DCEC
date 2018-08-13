@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument('--pretrain', default=True, type=str2bool, help='perform autoencoder pretraining')
     parser.add_argument('--pretrained_net', default=1, help='index or path of pretrained net')
     parser.add_argument('--net_architecture', default='DCEC', choices=['DCEC'], help='network architecture used')
-    parser.add_argument('--dataset', default='MNIST', choices=['MNIST', 'custom'], help='custom or prepared dataset')
+    parser.add_argument('--dataset', default='MNIST', choices=['MNIST', 'custom', 'MNIST-test'], help='custom or prepared dataset')
     parser.add_argument('--batch_size', default=256, type=int, help='batch size')
     parser.add_argument('--rate', default=0.001, type=float, help='learning rate for clustering')
     parser.add_argument('--rate_pretrain', default=0.001, type=float, help='learning rate for pretraining')
@@ -46,7 +46,7 @@ if __name__ == "__main__":
                         help='scheduler gamma for rate update - pretrain')
     parser.add_argument('--epochs', default=1000, type=int, help='clustering epochs')
     parser.add_argument('--epochs_pretrain', default=300, type=int, help='pretraining epochs')
-    parser.add_argument('--printing_frequency', default=1, type=int, help='training stats printing frequency')
+    parser.add_argument('--printing_frequency', default=10, type=int, help='training stats printing frequency')
     parser.add_argument('--gamma', default=0.1, type=float, help='clustering loss weight')
     parser.add_argument('--update_interval', default=80, type=int, help='update interval for target distribution')
     parser.add_argument('--tol', default=5e-4, type=float, help='stop criterium tolerance')
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     name_txt = os.path.join('reports', name_txt)
     name_net = os.path.join('nets', name_net)
-    if net_is_path:
+    if net_is_path and not pretrain:
         pretrained = args.pretrained_net
     else:
         pretrained = os.path.join('nets', pretrained)
@@ -237,7 +237,24 @@ if __name__ == "__main__":
         dataset_size = 60000
         tmp = "Training set size:\t" + str(dataset_size)
         utils.print_both(f, tmp)
+    elif dataset == 'MNIST-test':
+        tmp = "\nData preparation\nReading data from: MNIST test dataset"
+        utils.print_both(f, tmp)
+        img_size = [28, 28, 1]
+        tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
+        utils.print_both(f, tmp)
 
+        dataloader = torch.utils.data.DataLoader(
+            datasets.MNIST('../data', train=False, download=True,
+                           transform=transforms.Compose([
+                               transforms.ToTensor(),
+                               # transforms.Normalize((0.1307,), (0.3081,))
+                           ])),
+            batch_size=batch, shuffle=False, num_workers=workers)
+
+        dataset_size = 10000
+        tmp = "Training set size:\t" + str(dataset_size)
+        utils.print_both(f, tmp)
     else:
         # Data folder
         data_dir = 'data'
