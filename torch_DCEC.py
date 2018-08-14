@@ -31,8 +31,10 @@ if __name__ == "__main__":
     parser.add_argument('--tensorboard', default=True, type=bool, help='export training stats to tensorboard')
     parser.add_argument('--pretrain', default=True, type=str2bool, help='perform autoencoder pretraining')
     parser.add_argument('--pretrained_net', default=1, help='index or path of pretrained net')
-    parser.add_argument('--net_architecture', default='DCEC', choices=['DCEC'], help='network architecture used')
-    parser.add_argument('--dataset', default='MNIST', choices=['MNIST', 'custom', 'MNIST-test'], help='custom or prepared dataset')
+    parser.add_argument('--net_architecture', default='CAE_3', choices=['CAE_3', 'CAE_3bn'], help='network architecture used')
+    parser.add_argument('--dataset', default='MNIST', choices=['MNIST', 'custom', 'MNIST-test'],
+                        help='custom or prepared dataset')
+    parser.add_argument('--dataset_path', default='data', help='path to dataset')
     parser.add_argument('--batch_size', default=256, type=int, help='batch size')
     parser.add_argument('--rate', default=0.001, type=float, help='learning rate for clustering')
     parser.add_argument('--rate_pretrain', default=0.001, type=float, help='learning rate for pretraining')
@@ -257,7 +259,7 @@ if __name__ == "__main__":
         utils.print_both(f, tmp)
     else:
         # Data folder
-        data_dir = 'data'
+        data_dir = args.dataset_path
         tmp = "\nData preparation\nReading data from:\t./" + data_dir
         utils.print_both(f, tmp)
 
@@ -282,7 +284,7 @@ if __name__ == "__main__":
         image_dataset = datasets.ImageFolder(data_dir, data_transforms)
         # Prepare data for network: schuffle and arrange batches
         dataloader = torch.utils.data.DataLoader(image_dataset, batch_size=batch,
-                                                      shuffle=True, num_workers=workers)
+                                                      shuffle=False, num_workers=workers)
 
         # Size of data sets
         dataset_size = len(image_dataset)
@@ -299,9 +301,13 @@ if __name__ == "__main__":
 
     # print(params)
 
-    model = nets.DCEC(img_size, num_clusters=num_clusters)
-    # if board:
-        # writer.add_graph(model, torch.autograd.Variable(torch.Tensor(batch, img_size[2], img_size[0], img_size[1])))
+    to_eval = "nets." + model_name + "(img_size, num_clusters=num_clusters)"
+    # model = nets.CAE_3(img_size, num_clusters=num_clusters)
+    model = eval(to_eval)
+
+    # Tensorboard model representation
+    if board:
+        writer.add_graph(model, torch.autograd.Variable(torch.Tensor(batch, img_size[2], img_size[0], img_size[1])))
 
     model = model.to(device)
     criterion_1 = nn.MSELoss(size_average=True)
