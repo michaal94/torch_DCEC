@@ -31,7 +31,7 @@ if __name__ == "__main__":
     parser.add_argument('--tensorboard', default=True, type=bool, help='export training stats to tensorboard')
     parser.add_argument('--pretrain', default=True, type=str2bool, help='perform autoencoder pretraining')
     parser.add_argument('--pretrained_net', default=1, help='index or path of pretrained net')
-    parser.add_argument('--net_architecture', default='CAE_3', choices=['CAE_3', 'CAE_3bn'], help='network architecture used')
+    parser.add_argument('--net_architecture', default='CAE_3', choices=['CAE_3', 'CAE_3bn', 'CAE_4', 'CAE_4bn', 'CAE_5', 'CAE_5bn'], help='network architecture used')
     parser.add_argument('--dataset', default='MNIST', choices=['MNIST', 'custom', 'MNIST-test'],
                         help='custom or prepared dataset')
     parser.add_argument('--dataset_path', default='data', help='path to dataset')
@@ -54,6 +54,10 @@ if __name__ == "__main__":
     parser.add_argument('--tol', default=5e-4, type=float, help='stop criterium tolerance')
     parser.add_argument('--num_clusters', default=10, type=int, help='number of clusters')
     parser.add_argument('--custom_img_size', default=[128, 128, 3], nargs=3, type=int, help='size of custom images')
+    parser.add_argument('--leaky', default=True, type=str2bool)
+    parser.add_argument('--neg_slope', default=0.01, type=float)
+    parser.add_argument('--activations', default=False, type=str2bool)
+    parser.add_argument('--bias', default=True, type=str2bool)
     args = parser.parse_args()
     print(args)
 
@@ -75,7 +79,7 @@ if __name__ == "__main__":
     params = {'pretrain': pretrain}
 
     # Directories
-    dirs = ['runs', 'reports', 'nets']
+    dirs = ['runs2', 'reports2', 'nets2']
     list(map(lambda x: os.makedirs(x, exist_ok=True), dirs))
 
     # Net architecture
@@ -219,6 +223,14 @@ if __name__ == "__main__":
     utils.print_both(f, tmp)
     tmp = "Number of clusters:\t" + str(num_clusters)
     utils.print_both(f, tmp)
+    tmp = "Leaky relu:\t" + str(args.leaky)
+    utils.print_both(f, tmp)
+    tmp = "Leaky slope:\t" + str(args.neg_slope)
+    utils.print_both(f, tmp)
+    tmp = "Activations:\t" + str(args.activations)
+    utils.print_both(f, tmp)
+    tmp = "Bias:\t" + str(args.bias)
+    utils.print_both(f, tmp)
 
     # Data preparation
     if dataset == 'MNIST':
@@ -301,7 +313,7 @@ if __name__ == "__main__":
 
     # print(params)
 
-    to_eval = "nets." + model_name + "(img_size, num_clusters=num_clusters)"
+    to_eval = "nets." + model_name + "(img_size, num_clusters=num_clusters, leaky = args.leaky, neg_slope = args.neg_slope)"
     # model = nets.CAE_3(img_size, num_clusters=num_clusters)
     model = eval(to_eval)
 

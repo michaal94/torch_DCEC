@@ -283,7 +283,7 @@ def pretraining(model, dataloader, criterion, optimizer, scheduler, num_epochs, 
 
         epoch_loss = running_loss / dataset_size
         if epoch == 0: first_loss = epoch_loss
-        if epoch == 4 and epoch_loss / first_loss > 0.8:
+        if epoch == 4 and epoch_loss / first_loss > 0.9:
             utils.print_both(txt_file, "\nLoss not converging, starting pretraining again\n")
             return False
 
