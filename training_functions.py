@@ -70,6 +70,7 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
         writer.add_scalar('/ARI', ari, niter)
         writer.add_scalar('/Acc', acc, niter)
 
+    update_iter = 1
     finished = False
 
     # Go through all epochs
@@ -88,7 +89,6 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
         # Keep the batch number for inter-phase statistics
         batch_num = 1
         img_counter = 0
-        update_iter = 1
 
         # Iterate over data.
         for data in dataloader:
@@ -190,6 +190,245 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
         utils.print_both(txt_file, 'Loss: {0:.4f}\tLoss_recovery: {1:.4f}\tLoss_clustering: {2:.4f}'.format(epoch_loss,
                                                                                                             epoch_loss_rec,
                                                                                                             epoch_loss_clust))
+
+        # deep copy the
+        if epoch_loss < best_loss or epoch_loss > best_loss:
+            best_loss = epoch_loss
+            best_model_wts = copy.deepcopy(model.state_dict())
+
+        utils.print_both(txt_file, '')
+
+    time_elapsed = time.time() - since
+    utils.print_both(txt_file, 'Training complete in {:.0f}m {:.0f}s'.format(
+        time_elapsed // 60, time_elapsed % 60))
+
+    # load best model weights
+    model.load_state_dict(best_model_wts)
+    return model
+
+
+# Training function
+def train_semisupervised(model, dataloaders, criteria, optimizers, schedulers, num_epochs, params):
+
+    # Note the time
+    since = time.time()
+
+    # Unpack parameters
+    writer = params['writer']
+    if writer is not None: board = True
+    txt_file = params['txt_file']
+    pretrained = params['model_files'][1]
+    pretrain = params['pretrain']
+    print_freq = params['print_freq']
+    dataset_size = params['dataset_size']
+    dataset_labelled_size = params['dataset_labelled_size']
+    device = params['device']
+    batch = params['batch']
+    pretrain_epochs = params['pretrain_epochs']
+    gamma = params['gamma']
+    gamma_lab = params['gamma_lab']
+    update_interval = params['update_interval']
+    tol = params['tol']
+    label_upd_interval = params['label_upd_interval']
+
+    dataloader = dataloaders[0]
+    dataloader_labelled = dataloaders[1]
+
+    dl = dataloader
+
+    if pretrain:
+        while True:
+            pretrained_model = pretraining(model, copy.deepcopy(dl), criteria[0], optimizers[1], schedulers[1], pretrain_epochs, params)
+            if pretrained_model:
+                break
+            else:
+                for layer in model.children():
+                    if hasattr(layer, 'reset_parameters'):
+                        layer.reset_parameters()
+        model = pretrained_model
+    else:
+        try:
+            model.load_state_dict(torch.load(pretrained))
+            utils.print_both(txt_file, 'Pretrained weights loaded from file: ' + str(pretrained))
+        except:
+            print("Couldn't load pretrained weights")
+
+    utils.print_both(txt_file, '\nInitializing cluster centers based on K-means')
+    # kmeans(model, copy.deepcopy(dl), params)
+    average_labelled_dist(model, copy.deepcopy(dataloader_labelled), params)
+
+    utils.print_both(txt_file, '\nBegin clusters training')
+
+    # Prep variables for weights and accuracy of the best model
+    best_model_wts = copy.deepcopy(model.state_dict())
+    best_loss = 10000.0
+
+    utils.print_both(txt_file, '\nUpdating target distribution')
+    output_distribution, labels, preds_prev = calculate_predictions(model, copy.deepcopy(dl), params)
+    target_distribution = target(output_distribution)
+    nmi = utils.metrics.nmi(labels, preds_prev)
+    ari = utils.metrics.ari(labels, preds_prev)
+    acc = utils.metrics.acc(labels, preds_prev)
+    utils.print_both(txt_file,
+                     'NMI: {0:.5f}\tARI: {1:.5f}\tAcc {2:.5f}\n'.format(nmi, ari, acc))
+
+    if board:
+        niter = 0
+        writer.add_scalar('/NMI', nmi, niter)
+        writer.add_scalar('/ARI', ari, niter)
+        writer.add_scalar('/Acc', acc, niter)
+
+    update_iter = 1
+    finished = False
+
+    # Go through all epochs
+    for epoch in range(num_epochs):
+
+        utils.print_both(txt_file, 'Epoch {}/{}'.format(epoch + 1, num_epochs))
+        utils.print_both(txt_file,  '-' * 10)
+
+        schedulers[0].step()
+        model.train(True)  # Set model to training mode
+
+        running_loss = 0.0
+        running_loss_rec = 0.0
+        running_loss_clust = 0.0
+        running_loss_labels = 0.0
+
+        # Keep the batch number for inter-phase statistics
+        batch_num = 1
+        img_counter = 0
+
+        # print(dataloader)
+        # Iterate over data.
+        for data in dataloader:
+            # Get the inputs and labels
+            inputs, _ = data
+
+            inputs = inputs.to(device)
+
+            if (batch_num - 1) % update_interval == 0 and not (batch_num == 1 and epoch == 0):
+                utils.print_both(txt_file, '\nUpdating target distribution:')
+                output_distribution, labels, preds = calculate_predictions(model, dataloader, params)
+                target_distribution = target(output_distribution)
+                nmi = utils.metrics.nmi(labels, preds)
+                ari = utils.metrics.ari(labels, preds)
+                acc = utils.metrics.acc(labels, preds)
+                utils.print_both(txt_file,
+                                 'NMI: {0:.5f}\tARI: {1:.5f}\tAcc {2:.5f}\t'.format(nmi, ari, acc))
+                if board:
+                    niter = update_iter
+                    writer.add_scalar('/NMI', nmi, niter)
+                    writer.add_scalar('/ARI', ari, niter)
+                    writer.add_scalar('/Acc', acc, niter)
+                    update_iter += 1
+
+                # check stop criterion
+                delta_label = np.sum(preds != preds_prev).astype(np.float32) / preds.shape[0]
+                preds_prev = np.copy(preds)
+                if delta_label < tol:
+                    utils.print_both(txt_file, 'Label divergence ' + str(delta_label) + ' < tol ' + str(tol))
+                    utils.print_both(txt_file, 'Reached tolerance threshold. Stopping training.')
+                    finished = True
+                    break
+
+            tar_dist = target_distribution[((batch_num - 1) * batch):(batch_num*batch), :]
+            tar_dist = torch.from_numpy(tar_dist).to(device)
+            # print(tar_dist)
+
+            loss_labelled = 0
+
+                # print(loss_labelled)
+                # output_dist, labels, preds = calculate_predictions(model, dataloader_labelled, params)
+                # print(output_dist.shape)
+                # print(criteria[2](preds, labels))
+
+            # zero the parameter gradients
+            optimizers[0].zero_grad()
+
+            with torch.set_grad_enabled(True):
+                if (batch_num - 1) % label_upd_interval == 0 and not (batch_num == 1 and epoch == 0):
+                    # utils.print_both(txt_file, '\nUpdating labelled loss:')
+                    for d in dataloader_labelled:
+                        inp, lab = d
+                        inp = inp.to(params['device'])
+                        lab = lab.to(params['device'])
+                        _, outs, _ = model(inp)
+                        loss_labelled += criteria[2](outs, lab)
+                    loss_labelled = loss_labelled / dataset_labelled_size * gamma_lab
+
+                outputs, clusters, _ = model(inputs)
+                loss_rec = criteria[0](outputs, inputs)
+                loss_clust = gamma *criteria[1](torch.log(clusters), tar_dist) / batch
+                # print(loss_labelled)
+                loss = loss_rec + loss_clust + loss_labelled
+                # print(loss)
+                loss.backward()
+                optimizers[0].step()
+
+            # For keeping statistics
+            running_loss += loss.item() * inputs.size(0)
+            running_loss_rec += loss_rec.item() * inputs.size(0)
+            running_loss_clust += loss_rec.item() * inputs.size(0)
+            running_loss_labels += loss_labelled * inputs.size(0)
+
+            # Some current stats
+            loss_batch = loss.item()
+            loss_batch_rec = loss_rec.item()
+            loss_batch_clust = loss_clust.item()
+            loss_batch_labels = loss_labelled
+            loss_accum = running_loss / ((batch_num - 1) * batch + inputs.size(0))
+            loss_accum_rec = running_loss_rec / ((batch_num - 1) * batch + inputs.size(0))
+            loss_accum_clust = running_loss_clust / ((batch_num - 1) * batch + inputs.size(0))
+            loss_accum_labels = running_loss_labels / ((batch_num - 1) * batch + inputs.size(0))
+
+            if batch_num % print_freq == 0:
+                utils.print_both(txt_file, 'Epoch: [{0}][{1}/{2}]\t'
+                                           'Loss {3:.4f} ({4:.4f})\t'
+                                           'Loss_recovery {5:.4f} ({6:.4f})\t'
+                                           'Loss clustering {7:.4f} ({8:.4f})\t'
+                                           'Loss labels {9:.4f} ({10:.4f})\t'.format(epoch + 1, batch_num,
+                                                                                     len(dataloader),
+                                                                                     loss_batch,
+                                                                                     loss_accum, loss_batch_rec,
+                                                                                     loss_accum_rec,
+                                                                                     loss_batch_clust,
+                                                                                     loss_accum_clust,
+                                                                                     loss_batch_labels,
+                                                                                     loss_accum_labels))
+                if board:
+                    niter = epoch * len(dataloader) + batch_num
+                    writer.add_scalar('/Loss', loss_accum, niter)
+                    writer.add_scalar('/Loss_recovery', loss_accum_rec, niter)
+                    writer.add_scalar('/Loss_clustering', loss_accum_clust, niter)
+                    writer.add_scalar('/Loss_labels', loss_accum_labels, niter)
+            batch_num = batch_num + 1
+
+            if batch_num == len(dataloader) and (epoch+1) % 5:
+                inp = utils.tensor2img(inputs)
+                out = utils.tensor2img(outputs)
+                if board:
+                    img = np.concatenate((inp, out), axis=1)
+                    writer.add_image('Clustering/Epoch_' + str(epoch + 1).zfill(3) + '/Sample_' + str(img_counter).zfill(2), img)
+                    img_counter += 1
+
+        if finished: break
+
+        epoch_loss = running_loss / dataset_size
+        epoch_loss_rec = running_loss_rec / dataset_size
+        epoch_loss_clust = running_loss_clust / dataset_size
+        epoch_loss_labels = running_loss_labels / dataset_size
+
+        if board:
+            writer.add_scalar('/Loss' + '/Epoch', epoch_loss, epoch + 1)
+            writer.add_scalar('/Loss_rec' + '/Epoch', epoch_loss_rec, epoch + 1)
+            writer.add_scalar('/Loss_clust' + '/Epoch', epoch_loss_clust, epoch + 1)
+            writer.add_scalar('/Loss_label' + '/Epoch', epoch_loss_labels, epoch + 1)
+
+        utils.print_both(txt_file, 'Loss: {0:.4f}\tLoss_recovery: {1:.4f}\tLoss_clustering: {2:.4f}\tLoss labels: {3:.4f}'.format(
+            epoch_loss,
+            epoch_loss_rec,
+            epoch_loss_clust, epoch_loss_labels))
 
         # deep copy the
         if epoch_loss < best_loss or epoch_loss > best_loss:
@@ -328,6 +567,79 @@ def kmeans(model, dataloader, params):
 
     km.fit_predict(output_array)
     weights = torch.from_numpy(km.cluster_centers_)
+    model.clustering.set_weight(weights.to(params['device']))
+    # torch.cuda.empty_cache()
+
+
+def kmeans_relabel(model, dataloader, params):
+    km = KMeans(n_clusters=model.num_clusters, n_init=20)
+    output_array = None
+    model.eval()
+    for data in dataloader:
+        inputs, _ = data
+        inputs = inputs.to(params['device'])
+        _, _, outputs = model(inputs)
+        if output_array is not None:
+            output_array = np.concatenate((output_array, outputs.cpu().detach().numpy()), 0)
+        else:
+            output_array = outputs.cpu().detach().numpy()
+        # print(output_array.shape)
+        if output_array.shape[0] > 1: break
+
+    km.fit_predict(output_array)
+    weights = torch.from_numpy(km.cluster_centers_)
+    model.clustering.set_weight(weights.to(params['device']))
+    # torch.cuda.empty_cache()
+
+
+
+def average_labelled_dist(model, dataloader, params):
+    # km = KMeans(n_clusters=model.num_clusters, n_init=20)
+    output_array = None
+    label_array = None
+    model.eval()
+    for data in dataloader:
+        inputs, labels = data
+        inputs = inputs.to(params['device'])
+        _, _, outputs = model(inputs)
+        if output_array is not None:
+            output_array = np.concatenate((output_array, outputs.cpu().detach().numpy()), 0)
+            label_array = np.concatenate((label_array, labels.cpu().detach().numpy()), 0)
+        else:
+            output_array = outputs.cpu().detach().numpy()
+            label_array = labels.cpu().detach().numpy()
+        if output_array.shape[0] > 1200: break
+
+    weights = np.zeros((model.num_clusters, model.num_clusters))
+    num_probes = np.zeros((model.num_clusters, 1))
+
+    for j, row in enumerate(output_array):
+        # print(row)
+        label = label_array[j]
+        weights[label,:] += row
+        num_probes[label] += 1
+
+    for i in range(0, weights.shape[0]):
+        weights[i, :] /= num_probes[i]
+
+    # print(output_array.shape)
+    # print(weights)
+
+    # for i in range(0, model.num_clusters):
+    #     print(weights)
+    #     num_probes = 0
+    #     for j, row in enumerate(output_array):
+    #         if label_array[j] == i:
+    #             weights[]
+    #             num_probes += 1
+
+
+        # print(output_array.shape)
+        # if output_array.shape[0] > 50000: break
+
+    # km.fit_predict(output_array)
+    weights = weights.astype(np.float32)
+    weights = torch.from_numpy(weights)
     model.clustering.set_weight(weights.to(params['device']))
     # torch.cuda.empty_cache()
 

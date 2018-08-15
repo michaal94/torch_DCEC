@@ -50,7 +50,9 @@ if __name__ == "__main__":
     parser.add_argument('--epochs_pretrain', default=300, type=int, help='pretraining epochs')
     parser.add_argument('--printing_frequency', default=10, type=int, help='training stats printing frequency')
     parser.add_argument('--gamma', default=0.1, type=float, help='clustering loss weight')
+    parser.add_argument('--gamma_lab', default=0.01, type=float, help='labelled loss weight')
     parser.add_argument('--update_interval', default=80, type=int, help='update interval for target distribution')
+    parser.add_argument('--label_upd_interval', default=1, type=int, help='update interval for target distribution')
     parser.add_argument('--tol', default=1e-2, type=float, help='stop criterium tolerance')
     parser.add_argument('--num_clusters', default=10, type=int, help='number of clusters')
     parser.add_argument('--custom_img_size', default=[128, 128, 3], nargs=3, type=int, help='size of custom images')
@@ -91,7 +93,9 @@ if __name__ == "__main__":
             for file in reports_list:
                 # print(file)
                 if fnmatch.fnmatch(file, model_name+'*'):
+                    print(file)
                     idx = int(str(file)[-7:-4]) + 1
+                    print(idx)
                     break
         try:
             idx
@@ -105,6 +109,8 @@ if __name__ == "__main__":
     name_txt = name + '.txt'
     name_net = name
     pretrained = name + '_pretrained.pt'
+
+    print(name_txt)
 
     name_txt = os.path.join('reports', name_txt)
     name_net = os.path.join('nets', name_net)
@@ -175,9 +181,16 @@ if __name__ == "__main__":
     gamma = args.gamma
     params['gamma'] = gamma
 
+    # Labelled loss weight:
+    gamma_lab = args.gamma_lab
+    params['gamma_lab'] = gamma_lab
+
     # Update interval for target distribution:
     update_interval = args.update_interval
     params['update_interval'] = update_interval
+
+    label_upd_interval = args.label_upd_interval
+    params['label_upd_interval'] = label_upd_interval
 
     # Tolerance for label changes:
     tol = args.tol
@@ -217,7 +230,11 @@ if __name__ == "__main__":
     utils.print_both(f, tmp)
     tmp = "Clustering loss weight:\t" + str(gamma)
     utils.print_both(f, tmp)
+    tmp = "Labelled loss weight:\t" + str(gamma_lab)
+    utils.print_both(f, tmp)
     tmp = "Update interval for target distribution:\t" + str(update_interval)
+    utils.print_both(f, tmp)
+    tmp = "Update interval for labelled loss:\t" + str(label_upd_interval)
     utils.print_both(f, tmp)
     tmp = "Stop criterium tolerance:\t" + str(tol)
     utils.print_both(f, tmp)
@@ -240,17 +257,31 @@ if __name__ == "__main__":
         tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
         utils.print_both(f, tmp)
 
-        dataloader = torch.utils.data.DataLoader(
-            datasets.MNIST('../data', train=True, download=True,
+        dataset = datasets.MNIST('../data', train=True, download=True,
                            transform=transforms.Compose([
                                transforms.ToTensor(),
                                # transforms.Normalize((0.1307,), (0.3081,))
-                           ])),
+                           ]))
+
+        dataloader = torch.utils.data.DataLoader(dataset,
             batch_size=batch, shuffle=False, num_workers=workers)
 
         dataset_size = 60000
         tmp = "Training set size:\t" + str(dataset_size)
         utils.print_both(f, tmp)
+
+        dataset_labelled = datasets.MNIST('../data', train=False, download=True,
+                                 transform=transforms.Compose([
+                                     transforms.ToTensor(),
+                                     # transforms.Normalize((0.1307,), (0.3081,))
+                                 ]))
+
+        dataloader_labelled = torch.utils.data.DataLoader(dataset_labelled,
+                                                 batch_size=batch, shuffle=False, num_workers=workers)
+
+        dataset_labelled_size = 10000
+
+
     elif dataset == 'MNIST-test':
         tmp = "\nData preparation\nReading data from: MNIST test dataset"
         utils.print_both(f, tmp)
@@ -304,6 +335,7 @@ if __name__ == "__main__":
         utils.print_both(f, tmp)
 
     params['dataset_size'] = dataset_size
+    params['dataset_labelled_size'] = dataset_labelled_size
 
     # GPU check
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -324,8 +356,9 @@ if __name__ == "__main__":
     model = model.to(device)
     criterion_1 = nn.MSELoss(size_average=True)
     criterion_2 = nn.KLDivLoss(size_average=False)
+    criterion_3 = nn.CrossEntropyLoss(size_average=False)
 
-    criteria = [criterion_1, criterion_2]
+    criteria = [criterion_1, criterion_2, criterion_3]
 
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=rate, weight_decay=weight)
 
@@ -338,10 +371,12 @@ if __name__ == "__main__":
 
     schedulers = [scheduler, scheduler_pretrain]
 
+    print([dataloader, dataloader_labelled])
+
     if args.mode == 'train_full':
-        model = training_functions.train_model(model, dataloader, criteria, optimizers, schedulers, epochs, params)
+        model = training_functions.train_semisupervised(model, [dataloader, dataloader_labelled], criteria, optimizers, schedulers, epochs, params)
     elif args.mode == 'pretrain':
-        model = training_functions.pretraining(model, dataloader, criteria, optimizers, schedulers, epochs, params)
+        model = training_functions.pretraining(model, [dataloader, dataloader_labelled], criteria, optimizers, schedulers, epochs, params)
 
     torch.save(model.state_dict(), name_net + '.pt')
 

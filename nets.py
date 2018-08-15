@@ -107,9 +107,9 @@ class CAE_3(nn.Module):
         return x, clustering_out, extra_out
 
 
-class CAE_3bn(nn.Module):
+class CAE_bn3(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128], leaky=True, neg_slope=0.01, activations=False, bias=True):
-        super(CAE_3bn, self).__init__()
+        super(CAE_bn3, self).__init__()
         # bias = True
         self.activations=activations
         self.pretrained = False
@@ -367,9 +367,9 @@ class CAE_4(nn.Module):
             x = self.tanh(x)
         return x, clustering_out, extra_out
 
-class CAE_4bn(nn.Module):
+class CAE_bn4(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128, 256], leaky=True, neg_slope=0.01, activations=False, bias=True):
-        super(CAE_4bn, self).__init__()
+        super(CAE_bn4, self).__init__()
         self.activations = activations
         # bias = True
         self.pretrained = False
@@ -577,9 +577,9 @@ class CAE_5(nn.Module):
             x = self.tanh(x)
         return x, clustering_out, extra_out
 
-class CAE_5bn(nn.Module):
+class CAE_bn5(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128, 256, 512], leaky=True, neg_slope=0.01, activations=False, bias=True):
-        super(CAE_5bn, self).__init__()
+        super(CAE_bn5, self).__init__()
         self.activations = activations
         # bias = True
         self.pretrained = False
