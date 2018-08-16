@@ -664,7 +664,7 @@ def calculate_predictions(model, dataloader, params):
             label_array = labels.cpu().detach().numpy()
 
     preds = np.argmax(output_array.data, axis=1)
-
+    # print(output_array.shape)
     return output_array, label_array, preds
 
 

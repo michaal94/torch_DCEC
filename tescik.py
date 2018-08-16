@@ -61,7 +61,7 @@ dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=1,
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-model = nets.CAE_5bn(img_size, leaky=True, neg_slope=0.01, activations=True, bias=True)
+model = nets.CAE_bn5(img_size, leaky=True, neg_slope=0.01, activations=True, bias=True)
 model = model.to(device)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.01)

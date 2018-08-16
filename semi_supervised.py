@@ -335,6 +335,13 @@ if __name__ == "__main__":
         tmp = "Training set size:\t" + str(dataset_size)
         utils.print_both(f, tmp)
 
+        # Read data from selected folder and apply transformations
+        image_dataset_l = datasets.ImageFolder(data_dir+'_l', data_transforms)
+        # Prepare data for network: schuffle and arrange batches
+        dataloader_labelled = torch.utils.data.DataLoader(image_dataset_l, batch_size=batch,
+                                                 shuffle=False, num_workers=workers)
+        dataset_labelled_size = len(image_dataset_l)
+
     params['dataset_size'] = dataset_size
     params['dataset_labelled_size'] = dataset_labelled_size
 
