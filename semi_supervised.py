@@ -257,7 +257,7 @@ if __name__ == "__main__":
         tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
         utils.print_both(f, tmp)
 
-        dataset = datasets.MNIST('../data', train=True, download=True,
+        dataset = datasets.MNIST('../data', train=False, download=True,
                            transform=transforms.Compose([
                                transforms.ToTensor(),
                                # transforms.Normalize((0.1307,), (0.3081,))
@@ -266,7 +266,7 @@ if __name__ == "__main__":
         dataloader = torch.utils.data.DataLoader(dataset,
             batch_size=batch, shuffle=False, num_workers=workers)
 
-        dataset_size = 60000
+        dataset_size = 10000
         tmp = "Training set size:\t" + str(dataset_size)
         utils.print_both(f, tmp)
 
@@ -280,7 +280,8 @@ if __name__ == "__main__":
                                                  batch_size=batch, shuffle=False, num_workers=workers)
 
         dataset_labelled_size = 10000
-
+        import copy
+        # dataloader_labelled = copy.deepcopy(dataloader)
 
     elif dataset == 'MNIST-test':
         tmp = "\nData preparation\nReading data from: MNIST test dataset"

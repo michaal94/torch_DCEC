@@ -349,13 +349,15 @@ def train_semisupervised(model, dataloaders, criteria, optimizers, schedulers, n
             with torch.set_grad_enabled(True):
                 if (batch_num - 1) % label_upd_interval == 0 and not (batch_num == 1 and epoch == 0):
                     # utils.print_both(txt_file, '\nUpdating labelled loss:')
+                    size = 0
                     for d in dataloader_labelled:
                         inp, lab = d
                         inp = inp.to(params['device'])
                         lab = lab.to(params['device'])
                         _, outs, _ = model(inp)
                         loss_labelled += criteria[2](outs, lab)
-                    loss_labelled = loss_labelled / dataset_labelled_size * gamma_lab
+                        size += inp.size(0)
+                    loss_labelled = loss_labelled / size * gamma_lab
 
                 outputs, clusters, _ = model(inputs)
                 loss_rec = criteria[0](outputs, inputs)
@@ -522,7 +524,7 @@ def pretraining(model, dataloader, criterion, optimizer, scheduler, num_epochs, 
 
         epoch_loss = running_loss / dataset_size
         if epoch == 0: first_loss = epoch_loss
-        if epoch == 4 and epoch_loss / first_loss > 0.9:
+        if epoch == 4 and epoch_loss / first_loss > 1:
             utils.print_both(txt_file, "\nLoss not converging, starting pretraining again\n")
             return False
 
@@ -608,8 +610,8 @@ def average_labelled_dist(model, dataloader, params):
         else:
             output_array = outputs.cpu().detach().numpy()
             label_array = labels.cpu().detach().numpy()
-        if output_array.shape[0] > 1200: break
-
+        if output_array.shape[0] > 200: break
+    print(output_array.shape[0])
     weights = np.zeros((model.num_clusters, model.num_clusters))
     num_probes = np.zeros((model.num_clusters, 1))
 
@@ -622,6 +624,7 @@ def average_labelled_dist(model, dataloader, params):
     for i in range(0, weights.shape[0]):
         weights[i, :] /= num_probes[i]
 
+    print(num_probes)
     # print(output_array.shape)
     # print(weights)
 
