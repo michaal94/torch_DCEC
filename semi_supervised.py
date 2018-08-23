@@ -16,7 +16,7 @@ if __name__ == "__main__":
     import training_functions
     import distutils
     from tensorboardX import SummaryWriter
-
+    import usps
 
     def str2bool(v):
         if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument('--pretrain', default=True, type=str2bool, help='perform autoencoder pretraining')
     parser.add_argument('--pretrained_net', default=1, help='index or path of pretrained net')
     parser.add_argument('--net_architecture', default='CAE_3', choices=['CAE_3', 'CAE_bn3', 'CAE_4', 'CAE_bn4', 'CAE_5', 'CAE_bn5'], help='network architecture used')
-    parser.add_argument('--dataset', default='MNIST', choices=['MNIST', 'custom', 'MNIST-test'],
+    parser.add_argument('--dataset', default='MNIST', choices=['MNIST', 'custom', 'MNIST-test', 'MNIST-full', 'STL10'],
                         help='custom or prepared dataset')
     parser.add_argument('--dataset_path', default='data', help='path to dataset')
     parser.add_argument('--batch_size', default=256, type=int, help='batch size')
@@ -301,6 +301,81 @@ if __name__ == "__main__":
         dataset_size = 10000
         tmp = "Training set size:\t" + str(dataset_size)
         utils.print_both(f, tmp)
+
+    elif dataset == 'MNIST-full':
+        tmp = "\nData preparation\nReading data from: MNIST dataset"
+        utils.print_both(f, tmp)
+        img_size = [28, 28, 1]
+        tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
+        utils.print_both(f, tmp)
+
+        import mnist
+
+        dataset = mnist.MNIST('../data', download=False,
+                           transform=transforms.Compose([
+                               transforms.ToTensor(),
+                               # transforms.Normalize((0.1307,), (0.3081,))
+                           ]))
+
+        dataloader = torch.utils.data.DataLoader(dataset,
+            batch_size=batch, shuffle=False, num_workers=workers)
+
+        dataset_size = len(dataset)
+        tmp = "Training set size:\t" + str(dataset_size)
+        utils.print_both(f, tmp)
+
+        dataset_labelled = mnist.MNIST('../data', small=True, download=False,
+                                 transform=transforms.Compose([
+                                     transforms.ToTensor(),
+                                     # transforms.Normalize((0.1307,), (0.3081,))
+                                 ]))
+
+        dataloader_labelled = torch.utils.data.DataLoader(dataset_labelled,
+                                                 batch_size=batch, shuffle=False, num_workers=workers)
+
+        dataset_labelled_size = len(dataset_labelled)
+        tmp = "Training set labelled size:\t" + str(dataset_labelled_size)
+        utils.print_both(f, tmp)
+        import copy
+        # dataloader_labelled = copy.deepcopy(dataloader)
+
+    elif dataset == 'STL10':
+        tmp = "\nData preparation\nReading data from: USPS dataset"
+        utils.print_both(f, tmp)
+        img_size = [96, 96, 3]
+        tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
+        utils.print_both(f, tmp)
+
+        dataset = datasets.STL10('../data', split='train', download=True,
+                            transform=transforms.Compose([
+                                transforms.ToTensor(),
+                                # transforms.Normalize((0.1307,), (0.3081,))
+                            ]))
+
+        dataloader = torch.utils.data.DataLoader(dataset,
+                                                 batch_size=batch, shuffle=False, num_workers=workers)
+
+        dataset_size = len(dataset)
+        tmp = "Training set size:\t" + str(dataset_size)
+        utils.print_both(f, tmp)
+
+        import stl10
+
+        dataset_labelled = stl10.STL10('../data', split='train', download=False,
+                                 transform=transforms.Compose([
+                                     transforms.ToTensor(),
+                                     # transforms.Normalize((0.1307,), (0.3081,))
+                                 ]))
+
+        dataloader_labelled = torch.utils.data.DataLoader(dataset_labelled,
+                                                 batch_size=batch, shuffle=False, num_workers=workers)
+
+        dataset_labelled_size = len(dataset_labelled)
+        print(dataset_labelled_size)
+        import copy
+
+        # dataloader_labelled = copy.deepcopy(dataloader)
+
     else:
         # Data folder
         data_dir = args.dataset_path
