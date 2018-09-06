@@ -14,10 +14,9 @@ if __name__ == "__main__":
     import nets
     import utils
     import training_functions
-    import distutils
     from tensorboardX import SummaryWriter
 
-
+    # Translate string entries to bool for parser
     def str2bool(v):
         if v.lower() in ('yes', 'true', 't', 'y', '1'):
             return True
@@ -32,7 +31,8 @@ if __name__ == "__main__":
     parser.add_argument('--pretrain', default=True, type=str2bool, help='perform autoencoder pretraining')
     parser.add_argument('--pretrained_net', default=1, help='index or path of pretrained net')
     parser.add_argument('--net_architecture', default='CAE_3', choices=['CAE_3', 'CAE_bn3', 'CAE_4', 'CAE_bn4', 'CAE_5', 'CAE_bn5'], help='network architecture used')
-    parser.add_argument('--dataset', default='MNIST', choices=['MNIST', 'custom', 'MNIST-test'],
+    parser.add_argument('--dataset', default='MNIST-train',
+                        choices=['MNIST-train', 'custom', 'MNIST-test', 'MNIST-full'],
                         help='custom or prepared dataset')
     parser.add_argument('--dataset_path', default='data', help='path to dataset')
     parser.add_argument('--batch_size', default=256, type=int, help='batch size')
@@ -67,6 +67,7 @@ if __name__ == "__main__":
 
     board = args.tensorboard
 
+    # Deal with pretraining option and way of showing network path
     pretrain = args.pretrain
     net_is_path = True
     if not pretrain:
@@ -79,12 +80,13 @@ if __name__ == "__main__":
     params = {'pretrain': pretrain}
 
     # Directories
+    # Create directories structure
     dirs = ['runs', 'reports', 'nets']
     list(map(lambda x: os.makedirs(x, exist_ok=True), dirs))
 
     # Net architecture
     model_name = args.net_architecture
-    # Indexing
+    # Indexing (for automated reports saving) - allows to run many trainings and get all the reports collected
     if pretrain or (not pretrain and net_is_path):
         reports_list = sorted(os.listdir('reports'), reverse=True)
         if reports_list:
@@ -106,6 +108,7 @@ if __name__ == "__main__":
     name_net = name
     pretrained = name + '_pretrained.pt'
 
+    # Arrange filenames for report, network weights, pretrained network weights
     name_txt = os.path.join('reports', name_txt)
     name_net = os.path.join('nets', name_net)
     if net_is_path and not pretrain:
@@ -125,7 +128,7 @@ if __name__ == "__main__":
         f = open(name_txt, 'a')
     params['txt_file'] = f
 
-    # Delete tensorboard entry if exist (not to overlap)
+    # Delete tensorboard entry if exist (not to overlap as the charts become unreadable)
     try:
         os.system("rm -rf runs/" + name)
     except:
@@ -233,42 +236,70 @@ if __name__ == "__main__":
     utils.print_both(f, tmp)
 
     # Data preparation
-    if dataset == 'MNIST':
-        tmp = "\nData preparation\nReading data from: MNIST dataset"
+    if dataset == 'MNIST-train':
+        # Uses slightly modified torchvision MNIST class
+        import mnist
+        tmp = "\nData preparation\nReading data from: MNIST train dataset"
         utils.print_both(f, tmp)
         img_size = [28, 28, 1]
         tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
         utils.print_both(f, tmp)
 
-        dataloader = torch.utils.data.DataLoader(
-            datasets.MNIST('../data', train=True, download=True,
+        dataset = mnist.MNIST('../data', train=True, download=True,
                            transform=transforms.Compose([
                                transforms.ToTensor(),
                                # transforms.Normalize((0.1307,), (0.3081,))
-                           ])),
+                           ]))
+
+        dataloader = torch.utils.data.DataLoader(dataset,
             batch_size=batch, shuffle=False, num_workers=workers)
 
-        dataset_size = 60000
+        dataset_size = len(dataset)
         tmp = "Training set size:\t" + str(dataset_size)
         utils.print_both(f, tmp)
+
     elif dataset == 'MNIST-test':
+        import mnist
         tmp = "\nData preparation\nReading data from: MNIST test dataset"
         utils.print_both(f, tmp)
         img_size = [28, 28, 1]
         tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
         utils.print_both(f, tmp)
 
-        dataloader = torch.utils.data.DataLoader(
-            datasets.MNIST('../data', train=False, download=True,
-                           transform=transforms.Compose([
-                               transforms.ToTensor(),
-                               # transforms.Normalize((0.1307,), (0.3081,))
-                           ])),
-            batch_size=batch, shuffle=False, num_workers=workers)
+        dataset = mnist.MNIST('../data', train=False, download=True,
+                              transform=transforms.Compose([
+                                  transforms.ToTensor(),
+                                  # transforms.Normalize((0.1307,), (0.3081,))
+                              ]))
 
-        dataset_size = 10000
+        dataloader = torch.utils.data.DataLoader(dataset,
+                                                 batch_size=batch, shuffle=False, num_workers=workers)
+
+        dataset_size = len(dataset)
         tmp = "Training set size:\t" + str(dataset_size)
         utils.print_both(f, tmp)
+
+    elif dataset == 'MNIST-full':
+        import mnist
+        tmp = "\nData preparation\nReading data from: MNIST full dataset"
+        utils.print_both(f, tmp)
+        img_size = [28, 28, 1]
+        tmp = "Image size used:\t{0}x{1}".format(img_size[0], img_size[1])
+        utils.print_both(f, tmp)
+
+        dataset = mnist.MNIST('../data', full=True, download=True,
+                               transform=transforms.Compose([
+                                   transforms.ToTensor(),
+                                   # transforms.Normalize((0.1307,), (0.3081,))
+                               ]))
+
+        dataloader = torch.utils.data.DataLoader(dataset,
+                                                 batch_size=batch, shuffle=False, num_workers=workers)
+
+        dataset_size = len(dataset)
+        tmp = "Training set size:\t" + str(dataset_size)
+        utils.print_both(f, tmp)
+
     else:
         # Data folder
         data_dir = args.dataset_path
@@ -311,10 +342,8 @@ if __name__ == "__main__":
     utils.print_both(f, tmp + '\n')
     params['device'] = device
 
-    # print(params)
-
+    # Evaluate the proper model
     to_eval = "nets." + model_name + "(img_size, num_clusters=num_clusters, leaky = args.leaky, neg_slope = args.neg_slope)"
-    # model = nets.CAE_3(img_size, num_clusters=num_clusters)
     model = eval(to_eval)
 
     # Tensorboard model representation
@@ -322,7 +351,9 @@ if __name__ == "__main__":
     #     writer.add_graph(model, torch.autograd.Variable(torch.Tensor(batch, img_size[2], img_size[0], img_size[1])))
 
     model = model.to(device)
+    # Reconstruction loss
     criterion_1 = nn.MSELoss(size_average=True)
+    # Clustering loss
     criterion_2 = nn.KLDivLoss(size_average=False)
 
     criteria = [criterion_1, criterion_2]
@@ -343,8 +374,11 @@ if __name__ == "__main__":
     elif args.mode == 'pretrain':
         model = training_functions.pretraining(model, dataloader, criteria, optimizers, schedulers, epochs, params)
 
+    # Save final model
     torch.save(model.state_dict(), name_net + '.pt')
 
+    # Close files
     f.close()
-    writer.close()
+    if board:
+        writer.close()
 

@@ -2,6 +2,7 @@ import numpy as np
 import sklearn.metrics
 
 
+# Simple tensor to image translation
 def tensor2img(tensor):
     img = tensor.cpu().data[0].numpy().transpose((1, 2, 0))
     mean = np.array([0.485, 0.456, 0.406])
@@ -17,6 +18,7 @@ def print_both(f, text):
     f.write(text + '\n')
 
 
+# Metrics class was copied from DCEC article authors repository (link in README)
 class metrics:
     nmi = sklearn.metrics.normalized_mutual_info_score
     ari = sklearn.metrics.adjusted_rand_score

@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
-import math
 import copy
 
+# Clustering layer definition (see DCEC article for equations)
 class ClusterlingLayer(nn.Module):
     def __init__(self, in_features=10, out_features=10, alpha=1.0):
         super(ClusterlingLayer, self).__init__()
@@ -32,6 +32,7 @@ class ClusterlingLayer(nn.Module):
         self.weight = nn.Parameter(tensor)
 
 
+# Convolutional autoencoder directly from DCEC article
 class CAE_3(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128], leaky=True, neg_slope=0.01, activations=False, bias=True):
         super(CAE_3, self).__init__()
@@ -49,7 +50,6 @@ class CAE_3(nn.Module):
         self.conv2 = nn.Conv2d(filters[0], filters[1], 5, stride=2, padding=2, bias=bias)
         self.conv3 = nn.Conv2d(filters[1], filters[2], 3, stride=2, padding=0, bias=bias)
         lin_features_len = ((input_shape[0]//2//2-1) // 2) * ((input_shape[0]//2//2-1) // 2) * filters[2]
-        # print(lin_features_len)
         self.embedding = nn.Linear(lin_features_len, num_clusters, bias=bias)
         self.deembedding = nn.Linear(num_clusters, lin_features_len, bias=bias)
         out_pad = 1 if input_shape[0] // 2 // 2 % 2 == 0 else 0
@@ -59,6 +59,7 @@ class CAE_3(nn.Module):
         out_pad = 1 if input_shape[0] % 2 == 0 else 0
         self.deconv1 = nn.ConvTranspose2d(filters[0], input_shape[2], 5, stride=2, padding=2, output_padding=out_pad, bias=bias)
         self.clustering = ClusterlingLayer(num_clusters, num_clusters)
+        # ReLU copies for graph representation in tensorboard
         self.relu1_1 = copy.deepcopy(self.relu)
         self.relu2_1 = copy.deepcopy(self.relu)
         self.relu3_1 = copy.deepcopy(self.relu)
@@ -69,48 +70,36 @@ class CAE_3(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, x):
-        # print(x.size())
         x = self.conv1(x)
         x = self.relu1_1(x)
-        # print(x.size())
         x = self.conv2(x)
         x = self.relu2_1(x)
-        # print(x.size())
         x = self.conv3(x)
-        # x = self.relu3_1(x)
-        # print(x.size())
         if self.activations:
             x = self.sig(x)
         else:
             x = self.relu3_1(x)
         x = x.view(x.size(0), -1)
-        # print(x.size())
         x = self.embedding(x)
-        # print(x.size())
         extra_out = x
         clustering_out = self.clustering(x)
-        # print(clustering_out.size())
         x = self.deembedding(x)
         x = self.relu1_2(x)
         x = x.view(x.size(0), self.filters[2], ((self.input_shape[0]//2//2-1) // 2), ((self.input_shape[0]//2//2-1) // 2))
-        # print(x.size())
         x = self.deconv3(x)
         x = self.relu2_2(x)
-        # print(x.size())
         x = self.deconv2(x)
         x = self.relu3_2(x)
-        # print(x.size())
         x = self.deconv1(x)
         if self.activations:
             x = self.tanh(x)
-        # print(x.size())
         return x, clustering_out, extra_out
 
 
+# Convolutional autoencoder from DCEC article with Batch Norms and Leaky ReLUs
 class CAE_bn3(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128], leaky=True, neg_slope=0.01, activations=False, bias=True):
         super(CAE_bn3, self).__init__()
-        # bias = True
         self.activations=activations
         self.pretrained = False
         self.num_clusters = num_clusters
@@ -125,9 +114,7 @@ class CAE_bn3(nn.Module):
         self.conv2 = nn.Conv2d(filters[0], filters[1], 5, stride=2, padding=2, bias=bias)
         self.bn2_1 = nn.BatchNorm2d(filters[1])
         self.conv3 = nn.Conv2d(filters[1], filters[2], 3, stride=2, padding=0, bias=bias)
-        # self.bn3_1 = nn.BatchNorm2d(filters[2])
         lin_features_len = ((input_shape[0]//2//2-1) // 2) * ((input_shape[0]//2//2-1) // 2) * filters[2]
-        # print(lin_features_len)
         self.embedding = nn.Linear(lin_features_len, num_clusters, bias=bias)
         self.deembedding = nn.Linear(num_clusters, lin_features_len, bias=bias)
         out_pad = 1 if input_shape[0] // 2 // 2 % 2 == 0 else 0
@@ -139,6 +126,7 @@ class CAE_bn3(nn.Module):
         self.bn2_2 = nn.BatchNorm2d(filters[0])
         self.deconv1 = nn.ConvTranspose2d(filters[0], input_shape[2], 5, stride=2, padding=2, output_padding=out_pad, bias=bias)
         self.clustering = ClusterlingLayer(num_clusters, num_clusters)
+        # ReLU copies for graph representation in tensorboard
         self.relu1_1 = copy.deepcopy(self.relu)
         self.relu2_1 = copy.deepcopy(self.relu)
         self.relu3_1 = copy.deepcopy(self.relu)
@@ -149,137 +137,41 @@ class CAE_bn3(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, x):
-        # print(x.size())
         x = self.conv1(x)
         x = self.relu1_1(x)
         x = self.bn1_1(x)
-        # print(x.size())
         x = self.conv2(x)
         x = self.relu2_1(x)
         x = self.bn2_1(x)
-        # print(x.size())
         x = self.conv3(x)
         if self.activations:
             x = self.sig(x)
         else:
             x = self.relu3_1(x)
-        # x = self.bn3_1(x)
-        # print(x.size())
         x = x.view(x.size(0), -1)
-        # print(x.size())
         x = self.embedding(x)
-        # print(x.size())
         extra_out = x
         clustering_out = self.clustering(x)
-        # print(clustering_out.size())
         x = self.deembedding(x)
         x = self.relu1_2(x)
         x = x.view(x.size(0), self.filters[2], ((self.input_shape[0]//2//2-1) // 2), ((self.input_shape[0]//2//2-1) // 2))
-        # print(x.size())
         x = self.deconv3(x)
         x = self.relu2_2(x)
         x = self.bn3_2(x)
-        # print(x.size())
         x = self.deconv2(x)
         x = self.relu3_2(x)
         x = self.bn2_2(x)
-        # print(x.size())
         x = self.deconv1(x)
-        # print(x.size())
         if self.activations:
             x = self.tanh(x)
         return x, clustering_out, extra_out
 
 
-class CAE_3bn2(nn.Module):
-    def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128], leaky=True, neg_slope=0.01, activations=False, bias=True):
-        super(CAE_3bn2, self).__init__()
-        # bias = True
-        self.activations=activations
-        self.pretrained = False
-        self.num_clusters = num_clusters
-        self.input_shape = input_shape
-        self.filters = filters
-        self.conv1 = nn.Conv2d(input_shape[2], filters[0], 5, stride=2, padding=2, bias=bias)
-        self.bn1_1 = nn.BatchNorm2d(filters[0])
-        if leaky:
-            self.relu = nn.LeakyReLU(negative_slope=neg_slope)
-        else:
-            self.relu = nn.ReLU(inplace=False)
-        self.conv2 = nn.Conv2d(filters[0], filters[1], 5, stride=2, padding=2, bias=bias)
-        self.bn2_1 = nn.BatchNorm2d(filters[1])
-        self.conv3 = nn.Conv2d(filters[1], filters[2], 3, stride=2, padding=0, bias=bias)
-        # self.bn3_1 = nn.BatchNorm2d(filters[2])
-        lin_features_len = ((input_shape[0]//2//2-1) // 2) * ((input_shape[0]//2//2-1) // 2) * filters[2]
-        # print(lin_features_len)
-        self.embedding = nn.Linear(lin_features_len, num_clusters, bias=bias)
-        self.deembedding = nn.Linear(num_clusters, lin_features_len, bias=bias)
-        out_pad = 1 if input_shape[0] // 2 // 2 % 2 == 0 else 0
-        self.deconv3 = nn.ConvTranspose2d(filters[2], filters[1], 3, stride=2, padding=0, output_padding=out_pad, bias=bias)
-        out_pad = 1 if input_shape[0] // 2 % 2 == 0 else 0
-        self.bn3_2 = nn.BatchNorm2d(filters[1])
-        self.deconv2 = nn.ConvTranspose2d(filters[1], filters[0], 5, stride=2, padding=2, output_padding=out_pad, bias=bias)
-        out_pad = 1 if input_shape[0] % 2 == 0 else 0
-        self.bn2_2 = nn.BatchNorm2d(filters[0])
-        self.deconv1 = nn.ConvTranspose2d(filters[0], input_shape[2], 5, stride=2, padding=2, output_padding=out_pad, bias=bias)
-        self.clustering = ClusterlingLayer(num_clusters, num_clusters)
-        self.relu1_1 = copy.deepcopy(self.relu)
-        self.relu2_1 = copy.deepcopy(self.relu)
-        self.relu3_1 = copy.deepcopy(self.relu)
-        self.relu1_2 = copy.deepcopy(self.relu)
-        self.relu2_2 = copy.deepcopy(self.relu)
-        self.relu3_2 = copy.deepcopy(self.relu)
-        self.sig = nn.Sigmoid()
-        self.tanh = nn.Tanh()
-
-    def forward(self, x):
-        # print(x.size())
-        x = self.conv1(x)
-        x = self.bn1_1(x)
-        x = self.relu1_1(x)
-        # print(x.size())
-        x = self.conv2(x)
-        x = self.bn2_1(x)
-        x = self.relu2_1(x)
-        # print(x.size())
-        x = self.conv3(x)
-        if self.activations:
-            x = self.sig(x)
-        else:
-            x = self.relu3_1(x)
-        # x = self.bn3_1(x)
-        # print(x.size())
-        x = x.view(x.size(0), -1)
-        # print(x.size())
-        x = self.embedding(x)
-        # print(x.size())
-        extra_out = x
-        clustering_out = self.clustering(x)
-        # print(clustering_out.size())
-        x = self.deembedding(x)
-        x = self.relu1_2(x)
-        x = x.view(x.size(0), self.filters[2], ((self.input_shape[0]//2//2-1) // 2), ((self.input_shape[0]//2//2-1) // 2))
-        # print(x.size())
-        x = self.deconv3(x)
-        x = self.bn3_2(x)
-        x = self.relu2_2(x)
-        # print(x.size())
-        x = self.deconv2(x)
-        x = self.bn2_2(x)
-        x = self.relu3_2(x)
-        # print(x.size())
-        x = self.deconv1(x)
-        # print(x.size())
-        if self.activations:
-            x = self.tanh(x)
-        return x, clustering_out, extra_out
-
-
+# Convolutional autoencoder with 4 convolutional blocks
 class CAE_4(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128, 256], leaky=True, neg_slope=0.01, activations=False, bias=True):
         super(CAE_4, self).__init__()
         self.activations = activations
-        # bias = True
         self.pretrained = False
         self.num_clusters = num_clusters
         self.input_shape = input_shape
@@ -296,7 +188,6 @@ class CAE_4(nn.Module):
 
         lin_features_len = ((input_shape[0] // 2 // 2 // 2 - 1) // 2) * ((input_shape[0] // 2 // 2 // 2 - 1) // 2) * \
                            filters[3]
-        # print(lin_features_len)
         self.embedding = nn.Linear(lin_features_len, num_clusters, bias=bias)
         self.deembedding = nn.Linear(num_clusters, lin_features_len, bias=bias)
         out_pad = 1 if input_shape[0] // 2 // 2 // 2 % 2 == 0 else 0
@@ -312,6 +203,7 @@ class CAE_4(nn.Module):
         self.deconv1 = nn.ConvTranspose2d(filters[0], input_shape[2], 5, stride=2, padding=2, output_padding=out_pad,
                                           bias=bias)
         self.clustering = ClusterlingLayer(num_clusters, num_clusters)
+        # ReLU copies for graph representation in tensorboard
         self.relu1_1 = copy.deepcopy(self.relu)
         self.relu2_1 = copy.deepcopy(self.relu)
         self.relu3_1 = copy.deepcopy(self.relu)
@@ -324,54 +216,40 @@ class CAE_4(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, x):
-        # print(x.size())
         x = self.conv1(x)
         x = self.relu1_1(x)
-        # print(x.size())
         x = self.conv2(x)
         x = self.relu2_1(x)
-        # print(x.size())
         x = self.conv3(x)
         x = self.relu3_1(x)
-        # print(x.size())
         x = self.conv4(x)
         if self.activations:
             x = self.sig(x)
         else:
             x = self.relu4_1(x)
-        # print(x.size())
         x = x.view(x.size(0), -1)
-        # print(x.size())
         x = self.embedding(x)
-        # print(x.size())
         extra_out = x
         clustering_out = self.clustering(x)
-        # print(clustering_out.size())
         x = self.deembedding(x)
         x = self.relu4_2(x)
-        # print(x.size())
         x = x.view(x.size(0), self.filters[3], ((self.input_shape[0]//2//2//2-1) // 2), ((self.input_shape[0]//2//2//2-1) // 2))
-        # print(x.size())
         x = self.deconv4(x)
         x = self.relu3_2(x)
-        # print(x.size())
         x = self.deconv3(x)
         x = self.relu2_2(x)
-        # print(x.size())
         x = self.deconv2(x)
         x = self.relu1_2(x)
-        # print(x.size())
         x = self.deconv1(x)
-        # print(x.size())
         if self.activations:
             x = self.tanh(x)
         return x, clustering_out, extra_out
 
+# Convolutional autoencoder with 4 convolutional blocks (BN version)
 class CAE_bn4(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128, 256], leaky=True, neg_slope=0.01, activations=False, bias=True):
         super(CAE_bn4, self).__init__()
         self.activations = activations
-        # bias = True
         self.pretrained = False
         self.num_clusters = num_clusters
         self.input_shape = input_shape
@@ -391,7 +269,6 @@ class CAE_bn4(nn.Module):
 
         lin_features_len = ((input_shape[0] // 2 // 2 // 2 - 1) // 2) * ((input_shape[0] // 2 // 2 // 2 - 1) // 2) * \
                            filters[3]
-        # print(lin_features_len)
         self.embedding = nn.Linear(lin_features_len, num_clusters, bias=bias)
         self.deembedding = nn.Linear(num_clusters, lin_features_len, bias=bias)
         out_pad = 1 if input_shape[0] // 2 // 2 // 2 % 2 == 0 else 0
@@ -410,6 +287,7 @@ class CAE_bn4(nn.Module):
         self.deconv1 = nn.ConvTranspose2d(filters[0], input_shape[2], 5, stride=2, padding=2, output_padding=out_pad,
                                           bias=bias)
         self.clustering = ClusterlingLayer(num_clusters, num_clusters)
+        # ReLU copies for graph representation in tensorboard
         self.relu1_1 = copy.deepcopy(self.relu)
         self.relu2_1 = copy.deepcopy(self.relu)
         self.relu3_1 = copy.deepcopy(self.relu)
@@ -422,61 +300,47 @@ class CAE_bn4(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, x):
-        # print(x.size())
         x = self.conv1(x)
         x = self.relu1_1(x)
         x = self.bn1_1(x)
-        # print(x.size())
         x = self.conv2(x)
         x = self.relu2_1(x)
         x = self.bn2_1(x)
-        # print(x.size())
         x = self.conv3(x)
         x = self.relu3_1(x)
         x = self.bn3_1(x)
-        # print(x.size())
         x = self.conv4(x)
         if self.activations:
             x = self.sig(x)
         else:
             x = self.relu4_1(x)
-        # print(x.size())
         x = x.view(x.size(0), -1)
-        # print(x.size())
         x = self.embedding(x)
-        # print(x.size())
         extra_out = x
         clustering_out = self.clustering(x)
-        # print(clustering_out.size())
         x = self.deembedding(x)
         x = self.relu4_2(x)
-        # print(x.size())
         x = x.view(x.size(0), self.filters[3], ((self.input_shape[0]//2//2//2-1) // 2), ((self.input_shape[0]//2//2//2-1) // 2))
-        # print(x.size())
         x = self.deconv4(x)
         x = self.relu3_2(x)
         x = self.bn4_2(x)
-        # print(x.size())
         x = self.deconv3(x)
         x = self.relu2_2(x)
         x = self.bn3_2(x)
-        # print(x.size())
         x = self.deconv2(x)
         x = self.relu1_2(x)
         x = self.bn2_2(x)
-        # print(x.size())
         x = self.deconv1(x)
-        # print(x.size())
         if self.activations:
             x = self.tanh(x)
         return x, clustering_out, extra_out
 
 
+# Convolutional autoencoder with 5 convolutional blocks
 class CAE_5(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128, 256, 512], leaky=True, neg_slope=0.01, activations=False, bias=True):
         super(CAE_5, self).__init__()
         self.activations = activations
-        # bias = True
         self.pretrained = False
         self.num_clusters = num_clusters
         self.input_shape = input_shape
@@ -495,7 +359,6 @@ class CAE_5(nn.Module):
 
         lin_features_len = ((input_shape[0] // 2 // 2 // 2 // 2 - 1) // 2) * (
                     (input_shape[0] // 2 // 2 // 2 // 2 - 1) // 2) * filters[4]
-        # print(lin_features_len)
         self.embedding = nn.Linear(lin_features_len, num_clusters, bias=bias)
         self.deembedding = nn.Linear(num_clusters, lin_features_len, bias=bias)
         out_pad = 1 if input_shape[0] // 2 // 2 // 2 // 2 % 2 == 0 else 0
@@ -514,6 +377,7 @@ class CAE_5(nn.Module):
         self.deconv1 = nn.ConvTranspose2d(filters[0], input_shape[2], 5, stride=2, padding=2, output_padding=out_pad,
                                           bias=bias)
         self.clustering = ClusterlingLayer(num_clusters, num_clusters)
+        # ReLU copies for graph representation in tensorboard
         self.relu1_1 = copy.deepcopy(self.relu)
         self.relu2_1 = copy.deepcopy(self.relu)
         self.relu3_1 = copy.deepcopy(self.relu)
@@ -528,60 +392,45 @@ class CAE_5(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, x):
-        # print(x.size())
         x = self.conv1(x)
         x = self.relu1_1(x)
-        # print(x.size())
         x = self.conv2(x)
         x = self.relu2_1(x)
-        # print(x.size())
         x = self.conv3(x)
         x = self.relu3_1(x)
-        # print(x.size())
         x = self.conv4(x)
         x = self.relu4_1(x)
-        # print(x.size())
         x = self.conv5(x)
         if self.activations:
             x = self.sig(x)
         else:
             x = self.relu5_1(x)
-        # print(x.size())
         x = x.view(x.size(0), -1)
-        # print(x.size())
         x = self.embedding(x)
-        # print(x.size())
         extra_out = x
         clustering_out = self.clustering(x)
-        # print(clustering_out.size())
         x = self.deembedding(x)
         x = self.relu4_2(x)
-        # print(x.size())
         x = x.view(x.size(0), self.filters[4], ((self.input_shape[0]//2//2//2//2-1) // 2), ((self.input_shape[0]//2//2//2//2-1) // 2))
-        # print(x.size())
         x = self.deconv5(x)
         x = self.relu4_2(x)
-        # print(x.size())
         x = self.deconv4(x)
         x = self.relu3_2(x)
-        # print(x.size())
         x = self.deconv3(x)
         x = self.relu2_2(x)
-        # print(x.size())
         x = self.deconv2(x)
         x = self.relu1_2(x)
-        # print(x.size())
         x = self.deconv1(x)
-        # print(x.size())
         if self.activations:
             x = self.tanh(x)
         return x, clustering_out, extra_out
 
+
+# Convolutional autoencoder with 5 convolutional blocks (BN version)
 class CAE_bn5(nn.Module):
     def __init__(self, input_shape=[128,128,3], num_clusters=10, filters=[32, 64, 128, 256, 512], leaky=True, neg_slope=0.01, activations=False, bias=True):
         super(CAE_bn5, self).__init__()
         self.activations = activations
-        # bias = True
         self.pretrained = False
         self.num_clusters = num_clusters
         self.input_shape = input_shape
@@ -604,7 +453,6 @@ class CAE_bn5(nn.Module):
 
         lin_features_len = ((input_shape[0] // 2 // 2 // 2 // 2 - 1) // 2) * (
                     (input_shape[0] // 2 // 2 // 2 // 2 - 1) // 2) * filters[4]
-        # print(lin_features_len)
         self.embedding = nn.Linear(lin_features_len, num_clusters, bias=bias)
         self.deembedding = nn.Linear(num_clusters, lin_features_len, bias=bias)
         out_pad = 1 if input_shape[0] // 2 // 2 // 2 // 2 % 2 == 0 else 0
@@ -627,6 +475,7 @@ class CAE_bn5(nn.Module):
         self.deconv1 = nn.ConvTranspose2d(filters[0], input_shape[2], 5, stride=2, padding=2, output_padding=out_pad,
                                           bias=bias)
         self.clustering = ClusterlingLayer(num_clusters, num_clusters)
+        # ReLU copies for graph representation in tensorboard
         self.relu1_1 = copy.deepcopy(self.relu)
         self.relu2_1 = copy.deepcopy(self.relu)
         self.relu3_1 = copy.deepcopy(self.relu)
@@ -641,59 +490,43 @@ class CAE_bn5(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, x):
-        # print(x.size())
         x = self.conv1(x)
         x = self.relu1_1(x)
         x = self.bn1_1(x)
-        # print(x.size())
         x = self.conv2(x)
         x = self.relu2_1(x)
         x = self.bn2_1(x)
-        # print(x.size())
         x = self.conv3(x)
         x = self.relu3_1(x)
         x = self.bn3_1(x)
-        # print(x.size())
         x = self.conv4(x)
         x = self.relu4_1(x)
         x = self.bn4_1(x)
-        # print(x.size())
         x = self.conv5(x)
         if self.activations:
             x = self.sig(x)
         else:
             x = self.relu5_1(x)
-        # print(x.size())
         x = x.view(x.size(0), -1)
-        # print(x.size())
         x = self.embedding(x)
-        # print(x.size())
         extra_out = x
         clustering_out = self.clustering(x)
-        # print(clustering_out.size())
         x = self.deembedding(x)
         x = self.relu5_2(x)
-        # print(x.size())
         x = x.view(x.size(0), self.filters[4], ((self.input_shape[0]//2//2//2//2-1) // 2), ((self.input_shape[0]//2//2//2//2-1) // 2))
-        # print(x.size())
         x = self.deconv5(x)
         x = self.relu4_2(x)
         x = self.bn5_2(x)
-        # print(x.size())
         x = self.deconv4(x)
         x = self.relu3_2(x)
         x = self.bn4_2(x)
-        # print(x.size())
         x = self.deconv3(x)
         x = self.relu2_2(x)
         x = self.bn3_2(x)
-        # print(x.size())
         x = self.deconv2(x)
         x = self.relu1_2(x)
         x = self.bn2_2(x)
-        # print(x.size())
         x = self.deconv1(x)
-        # print(x.size())
         if self.activations:
             x = self.tanh(x)
         return x, clustering_out, extra_out
