@@ -1,4 +1,4 @@
-# Semisupervised Clustering
+# PyTorch DCEC
 
 This repository contains DCEC method ([Deep Clustering with Convolutional Autoencoders](https://xifengguo.github.io/papers/ICONIP17-DCEC.pdf)) implementation with PyTorch with some improvements for network architectures.
 
@@ -29,8 +29,8 @@ git clone https://github.com/michaal94/torch_DCEC
 In order to test the basic version of the semi-supervised clustering just run it with your python distribution you installed libraries for (Anaconda, Virtualenv, etc.). In general type:
 
 ```
-cd Semisupervised-Clustering
-python3 semi_supervised.py
+cd torch_DCEC
+python3 torch_DCEC.py
 ```
 The example will run sample clustering with MNIST-train dataset.
 
@@ -47,16 +47,6 @@ The algorithm offers a plenty of options for adjustments:
     + Custom dataset - use the following data structure (characteristic for PyTorch):
         ```
         -data_directory (clusters must corespond to real clustering only for statistics)
-            -cluster_1
-                -image_1
-                -image_2
-                -...
-            -cluster_2
-                -image_1
-                -image_2
-                -...
-            -...
-        -data_directory_l (data used as labelled, use at least one example in each class in the current version of algorithm)
             -cluster_1
                 -image_1
                 -image_2
@@ -96,9 +86,7 @@ The algorithm offers a plenty of options for adjustments:
     + Scheduler gamma for pretraining phase: ```--sched_gamma_pretrain value```
 5. Algorithm specific parameters:
     + Clustering loss weight (for reconstruction loss fixed with weight 1): ```--gamma value``` (Value of 0.1 provided good results)
-    + Labelling loss weight: ```--gamma_lab value``` (0.01 provided good results)
     + Update interval for target distribution (in number of batches between updates): ```update_interval value``` (Value may be chosen such that distribution is updated each 1000-2000 photos)
-    + Label check interval ```--label_upd_interval value``` (Suggested to leave each iteration update)
     + Stop criterium tolerance ```--tol value``` (Depends on dataset, for small 0.01 was used for bigger e.g. MNIST - 0.001)
     + Target number of clusters ```--num_clusters value```
 6. Other options:
@@ -122,21 +110,6 @@ The code creates the following catalog structure when reporting the statistics:
 ```
 The files are indexed automatically for the files not to be accidentally overwritten. 
 
-## Performance
+## See also
 
-The code was mainly used to cluster images coming from camera-trap events. However, some additional benchmarks were performed on MNIST datasets. The following table gather some results (for 2% of labelled data):
-
-Set |  NMI  |    Acc 
----|---|---
-MNIST-full | 95.13 | 98.22% 
-MNIST-test | 89.59 | 95.29% 
-
-In addition, the _t-SNE_ plots of plain and clustered MNIST full dataset are shown:
-
-Full set before clustering:
-
-<img src="/MNIST_results/MNIST_plain.jpg" alt="MNIST full set t-SNE plot" width="640"/>
-
-After clustering:
-
-<img src="/MNIST_results/MNIST_trained.jpg" alt="MNIST full set after clustering t-SNE plot" width="640"/>
+For semi-supervised clustering vistit my [other repository](https://github.com/michaal94/Semisupervised-Clustering)
