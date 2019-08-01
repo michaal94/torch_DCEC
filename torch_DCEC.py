@@ -14,7 +14,7 @@ if __name__ == "__main__":
     import nets
     import utils
     import training_functions
-    from tensorboardX import SummaryWriter
+    from torch.utils.tensorboard import SummaryWriter
 
     # Translate string entries to bool for parser
     def str2bool(v):
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         if reports_list:
             for file in reports_list:
                 # print(file)
-                if fnmatch.fnmatch(file, model_name+'*'):
+                if fnmatch.fnmatch(file, model_name + '*'):
                     idx = int(str(file)[-7:-4]) + 1
                     break
         try:
@@ -246,10 +246,10 @@ if __name__ == "__main__":
         utils.print_both(f, tmp)
 
         dataset = mnist.MNIST('../data', train=True, download=True,
-                           transform=transforms.Compose([
-                               transforms.ToTensor(),
-                               # transforms.Normalize((0.1307,), (0.3081,))
-                           ]))
+                              transform=transforms.Compose([
+                                                           transforms.ToTensor(),
+                                                           # transforms.Normalize((0.1307,), (0.3081,))
+                                                           ]))
 
         dataloader = torch.utils.data.DataLoader(dataset,
             batch_size=batch, shuffle=False, num_workers=workers)
@@ -372,7 +372,7 @@ if __name__ == "__main__":
     if args.mode == 'train_full':
         model = training_functions.train_model(model, dataloader, criteria, optimizers, schedulers, epochs, params)
     elif args.mode == 'pretrain':
-        model = training_functions.pretraining(model, dataloader, criteria, optimizers, schedulers, epochs, params)
+        model = training_functions.pretraining(model, dataloader, criteria[0], optimizers[1], schedulers[1], epochs, params)
 
     # Save final model
     torch.save(model.state_dict(), name_net + '.pt')
@@ -381,4 +381,3 @@ if __name__ == "__main__":
     f.close()
     if board:
         writer.close()
-

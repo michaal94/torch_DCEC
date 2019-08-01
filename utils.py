@@ -1,14 +1,22 @@
 import numpy as np
 import sklearn.metrics
+import torch
+from torchvision import transforms
+
+mean = (0.485, 0.456, 0.406)
+std = (0.229, 0.224, 0.225)
+inv_normalize = transforms.Normalize(
+    mean=[-0.485 / .229, -0.456 / 0.224, -0.406 / 0.255],
+    std=[1 / 0.229, 1 / 0.224, 1 / 0.255]
+)
 
 
 # Simple tensor to image translation
 def tensor2img(tensor):
-    img = tensor.cpu().data[0].numpy().transpose((1, 2, 0))
-    mean = np.array([0.485, 0.456, 0.406])
-    std = np.array([0.229, 0.224, 0.225])
-    img = std * img + mean
-    img = np.clip(img, 0, 1)
+    img = tensor.cpu().data[0]
+    if img.shape[0] != 1:
+        img = inv_normalize(img)
+    img = torch.clamp(img, 0, 1)
     return img
 
 
