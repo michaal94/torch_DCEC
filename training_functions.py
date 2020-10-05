@@ -145,7 +145,7 @@ def train_model(model, dataloader, criteria, optimizers, schedulers, num_epochs,
             # For keeping statistics
             running_loss += loss.item() * inputs.size(0)
             running_loss_rec += loss_rec.item() * inputs.size(0)
-            running_loss_clust += loss_rec.item() * inputs.size(0)
+            running_loss_clust += loss_clust.item() * inputs.size(0)
 
             # Some current stats
             loss_batch = loss.item()
